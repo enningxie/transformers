@@ -1,0 +1,13 @@
+pretrained_models
+
+data
+
+tests
+
+src/transformers/tmp
+
+examples/experiments
+
+.idea
+
+examples/saved_models
