@@ -34,10 +34,10 @@ VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt"}
 # "bert-base-uncased": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-vocab.txt"
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-bert-wwm/vocab.txt"),
-        "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-bert-wwm-ext/vocab.txt"),
-        "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-rbt3/vocab.txt"),
-        "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-rbtl3/vocab.txt"),
+        "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm/vocab.txt"),
+        "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm-ext/vocab.txt"),
+        "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbt3/vocab.txt"),
+        "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbtl3/vocab.txt"),
         "bert-uncased": "/Data/public/Bert/uncased_L-12_H-768_A-12/vocab.txt"
     }
 }

@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 # todo 替换成保存预训练模型的相对路径
 # "bert-base-uncased": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-config.json"
 BERT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-bert-wwm/bert_config.json"),
-    "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-bert-wwm-ext/bert_config.json"),
-    "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-rbt3/bert_config_rbt3.json"),
-    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-rbtl3/bert_config_rbtl3.json")
+    "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm/config.json"),
+    "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm-ext/config.json"),
+    "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbt3/config.json"),
+    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbtl3/config.json")
 }
 
 

@@ -61,8 +61,8 @@ class PretrainedConfig(object):
         self.use_bfloat16 = kwargs.pop("use_bfloat16", False)
         self.pruned_heads = kwargs.pop("pruned_heads", {})
 
-        # # Is decoder is used in encoder-decoder models to differentiate encoder from decoder
-        # self.is_decoder = kwargs.pop("is_decoder", False)
+        # Is decoder is used in encoder-decoder models to differentiate encoder from decoder
+        self.is_decoder = kwargs.pop("is_decoder", False)
         #
         # # Parameters for sequence generation
         # self.max_length = kwargs.pop("max_length", 20)

@@ -21,8 +21,7 @@ class AboutSequencePairClassification:
         self.data_processor = SequencePairClassificationProcessor()
         self.config = BertConfig.from_pretrained(pretrained_model_name, num_labels=num_labels)
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
-        self.model = TFBertForSequenceClassification.from_pretrained(pretrained_model_name, config=self.config,
-                                                                     from_pt=True)
+        self.model = TFBertForSequenceClassification.from_pretrained(pretrained_model_name, config=self.config)
 
         # training parameters
         self.batch_size = batch_size
@@ -86,9 +85,9 @@ class AboutSequencePairClassification:
         self.model.summary()
         # Train and evaluate using tf.keras.Model.fit()
         history = self.model.fit(train_dataset.repeat(), epochs=self.epochs, steps_per_epoch=train_steps,
-                                 validation_data=valid_dataset, validation_steps=valid_steps, callbacks=[early_stop])
+                                 validation_data=valid_dataset.repeat(), validation_steps=valid_steps, callbacks=[early_stop])
         print(f"History: {history.history}")
-        self.model.save_pretrained("saved_models/spc_1")
+        self.model.save_pretrained("saved_models/spc_2")
 
     # todo evaluate_op
     def predict_op(self, trained_model_path):
@@ -113,11 +112,11 @@ if __name__ == '__main__':
                                                   batch_size=64,
                                                   epochs=5,
                                                   max_length=64)
-    # #### training step ####
-    # tmp_spc_obj.train_op(raw_data_path)
+    #### training step ####
+    tmp_spc_obj.train_op(raw_data_path)
 
     #### evaluate step ####
 
-    #### predict step ####
-    tmp_trained_model_path = os.path.join(ROOT_PATH, 'examples/saved_models/spc_1')
-    tmp_spc_obj.predict_op(tmp_trained_model_path)
+    # #### predict step ####
+    # tmp_trained_model_path = os.path.join(ROOT_PATH, 'examples/saved_models/spc_2')
+    # tmp_spc_obj.predict_op(tmp_trained_model_path)

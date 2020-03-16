@@ -30,10 +30,10 @@ logger = logging.getLogger(__name__)
 # todo 改为预训练模型保存相对/绝对路径，当前map的是tf1的model
 # "bert-base-uncased": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-tf_model.h5",
 TF_BERT_PRETRAINED_MODEL_ARCHIVE_MAP = {
-    "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-bert-wwm/bert_model.ckpt"),
-    "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-bert-wwm-ext/bert_model.ckpt"),
-    "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/pytorch/chinese-rbt3/pytorch_model.bin"),
-    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow1.x/chinese-rbtl3/bert_model.ckpt")
+    "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm/tf_model.h5"),
+    "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm-ext/tf_model.h5"),
+    "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbt3/tf_model.h5"),
+    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbtl3/tf_model.h5")
 }
 
 
