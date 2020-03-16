@@ -808,7 +808,7 @@ class TFBertForMaskedLM(TFBertPreTrainedModel):
         return outputs  # prediction_scores, (hidden_states), (attentions)
 
 
-# BERT NSP，感觉可以用于通用2分类任务
+# BERT NSP
 class TFBertForNextSentencePrediction(TFBertPreTrainedModel):
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
