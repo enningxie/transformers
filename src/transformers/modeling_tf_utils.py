@@ -15,7 +15,6 @@
 # limitations under the License.
 """TF general model utils."""
 
-
 import logging
 import os
 
@@ -26,7 +25,6 @@ from tensorflow.python.keras.saving import hdf5_format
 from .file_utils import DUMMY_INPUTS, TF2_WEIGHTS_NAME, WEIGHTS_NAME
 from .configuration_utils import PretrainedConfig
 from .modeling_tf_pytorch_utils import load_pytorch_checkpoint_in_tf2_model
-
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +173,7 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin):
         """ Save a model and its configuration file to a directory, so that it
             can be re-loaded using the `:func:`~transformers.PreTrainedModel.from_pretrained`` class method.
         """
+        make_dir(save_directory)
         assert os.path.isdir(
             save_directory
         ), "Saving path should be a directory where the model and configuration can be saved"
@@ -562,3 +561,27 @@ def get_initializer(initializer_range=0.02):
         TruncatedNormal initializer with stddev = `initializer_range`.
     """
     return tf.keras.initializers.TruncatedNormal(stddev=initializer_range)
+
+
+def calculate_steps(examples_length, batch_size):
+    """
+    计算steps
+    :param examples_length: 数据的长度
+    :param batch_size: 单个batch长度
+    :return:
+    """
+    if examples_length % batch_size == 0:
+        tmp_steps = examples_length // batch_size
+    else:
+        tmp_steps = examples_length // batch_size + 1
+    return tmp_steps
+
+
+def make_dir(directory):
+    """
+    新建目录
+    :param directory: 路径
+    :return:
+    """
+    if not os.path.exists(directory):
+        os.mkdir(directory)
