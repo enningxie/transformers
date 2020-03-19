@@ -20,6 +20,11 @@ class AboutSequencePairClassification:
     """
 
     def __init__(self, pretrained_model_name, num_labels, max_length):
+        """
+        :param pretrained_model_name: 预训练模型权重保存简称或路径
+        :param num_labels: 类别个数，1默认最后使用sigmoid，2则使用softmax
+        :param max_length: 训练阶段sequence最大长度
+        """
         self.data_processor = SequencePairClassificationProcessor()
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
 
@@ -38,8 +43,8 @@ class AboutSequencePairClassification:
     def generate_tf_dataset(self, data_path, batch_size):
         """
         生成TFDataSet，用于训练模型前的准备
-        :param data_path:
-        :param batch_size:
+        :param data_path: 数据保存路径
+        :param batch_size: 训练阶段 batch_size大小
         :return:
         """
         # process raw data
@@ -66,7 +71,7 @@ class AboutSequencePairClassification:
     def get_trained_model(trained_model_path):
         """
         加载训练好的模型
-        :param trained_model_path:
+        :param trained_model_path: 训练好的模型路径
         :return:
         """
         trained_config = BertConfig.from_pretrained(os.path.join(trained_model_path, CONFIG_NAME))
@@ -76,8 +81,7 @@ class AboutSequencePairClassification:
     def get_compiled_model(self, model):
         """
         返回编译后的模型
-        :param model:
-        :param mode:
+        :param model: 编译前的模型
         :return:
         """
         # prepare training: compile tf.keras model with optimizer, loss and learning rate schedule
@@ -97,9 +101,9 @@ class AboutSequencePairClassification:
         """
         模型训练
         :param data_path: 原始数据保存路径
-        :param epochs:
-        :param batch_size:
-        :param saved_model_path:
+        :param epochs: 训练阶段迭代次数
+        :param batch_size: 训练阶段batch_size
+        :param saved_model_path: 训练结束后模型保存路径
         :return:
         """
         config = BertConfig.from_pretrained(self.pretrained_model_name, num_labels=self.num_labels)
@@ -115,6 +119,13 @@ class AboutSequencePairClassification:
         model.save_pretrained(saved_model_path)
 
     def evaluate_op(self, trained_model_path, test_data_path, batch_size=64):
+        """
+        模型evaluation step
+        :param trained_model_path: 训练好的模型保存路径
+        :param test_data_path: 测试数据保存路径
+        :param batch_size: evaluation阶段的batch_size
+        :return:
+        """
         # 模型加载
         trained_model = self.get_trained_model(trained_model_path)
         trained_model = self.get_compiled_model(trained_model)
@@ -131,7 +142,8 @@ class AboutSequencePairClassification:
 
     def predict_op(self, trained_model_path, batch_text_pairs):
         """
-        :param trained_model_path:
+        模型预测阶段
+        :param trained_model_path: 训练好了的模型保存的路径
         :param batch_text_pairs: [['想了解下您会想看哪款车型', '是想请问下您当时买的是哪款车呢'], ['今天天气很差', '今天天气很棒']]
         :return:
         """
@@ -139,8 +151,12 @@ class AboutSequencePairClassification:
         inputs = self.tokenizer.batch_encode_plus(batch_text_pairs, max_length=self.max_length, return_tensors="tf",
                                                   pad_to_max_length=True)
         tmp_pred = trained_model.predict(inputs)
-        tmp_result = tf.nn.sigmoid(tmp_pred)
-        return np.squeeze(tmp_result.numpy(), axis=-1)
+        if self.mode == 'binary':
+            tmp_result = tf.nn.sigmoid(tmp_pred)
+            return np.squeeze(tmp_result.numpy(), axis=-1)
+        else:
+            tmp_result = tf.nn.softmax(tmp_pred, axis=-1)
+            return tmp_result.numpy()
 
 
 if __name__ == '__main__':
@@ -157,7 +173,7 @@ if __name__ == '__main__':
     # tmp_spc_obj.evaluate_op(tmp_trained_model_path, raw_data_path)
 
     #### predict step ####
-    tmp_batch_text_pairs = [('想了解下您会想看哪款车型', '是想请问下您当时买的是哪款车呢'), ('今天天气很差', '今天天气很棒')]
+    tmp_batch_text_pairs = [('想了解下您会想看哪款车型', '是想请问下您当时买的是哪款车呢'), ('今天天气很差', '今天天气很棒'), ('今天天气不错', '今天天气很棒')]
     tmp_pred = tmp_spc_obj.predict_op(tmp_trained_model_path, tmp_batch_text_pairs)
     for tmp_pair, tmp_score in zip(tmp_batch_text_pairs, tmp_pred):
         print(f'{tmp_pair[0]} & {tmp_pair[1]} --> {tmp_score}')

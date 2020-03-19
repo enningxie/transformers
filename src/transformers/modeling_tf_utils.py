@@ -19,6 +19,7 @@ import logging
 import os
 
 import h5py
+import pickle
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.keras.saving import hdf5_format
@@ -585,3 +586,14 @@ def make_dir(directory):
     """
     if not os.path.exists(directory):
         os.mkdir(directory)
+
+
+def load_serialized_data(data_dir):
+    """
+    恢复数据
+    :param data_dir: 需要恢复数据的路径
+    :return:
+    """
+    with open(data_dir, 'rb') as file:
+        data = pickle.load(file)
+    return data

@@ -3,26 +3,18 @@
 """Single sequence classification"""
 import os
 import logging
-import pickle
 import tensorflow as tf
 from src.transformers.file_utils import ROOT_PATH, CONFIG_NAME, LABEL2ID_NAME, ID2CLASS_NAME
 from src.transformers.configuration_bert import BertConfig
 from src.transformers.tokenization_bert import BertTokenizer
 from src.transformers.modeling_tf_bert import TFBertForSequenceClassification
 from src.transformers.data_processors import SingleSentenceClassificationProcessor, convert_examples_to_features
-from src.transformers.modeling_tf_utils import calculate_steps
+from src.transformers.modeling_tf_utils import calculate_steps, load_serialized_data
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-
-def load_serialized_data(data_dir):
-    # 恢复数据
-    with open(data_dir, 'rb') as file:
-        data = pickle.load(file)
-    return data
 
 
 class AboutSingleSequenceClassification:
@@ -31,6 +23,11 @@ class AboutSingleSequenceClassification:
     """
 
     def __init__(self, pretrained_model_name, num_labels, max_length):
+        """
+        :param pretrained_model_name: 预训练模型权重简称/路径
+        :param num_labels: 类别个数
+        :param max_length: sequence最大长度
+        """
         self.data_processor = SingleSentenceClassificationProcessor()
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
         self.num_labels = num_labels
@@ -44,7 +41,7 @@ class AboutSingleSequenceClassification:
     def generate_tf_dataset(self, data_path, batch_size):
         """
         生成TFDataSet，用于训练模型前的准备
-        :param data_path:
+        :param data_path: 训练数据保存路径
         :return:
         """
         # process raw data
@@ -74,7 +71,7 @@ class AboutSingleSequenceClassification:
     def get_trained_model(trained_model_path):
         """
         加载训练好的模型
-        :param trained_model_path:
+        :param trained_model_path: 训练好的模型保存路径
         :return:
         """
         trained_config = BertConfig.from_pretrained(os.path.join(trained_model_path, CONFIG_NAME))
@@ -85,7 +82,7 @@ class AboutSingleSequenceClassification:
     def get_compiled_model(model):
         """
         返回编译后的模型
-        :param model:
+        :param model: 编译前模型
         :return:
         """
         # prepare training: compile tf.keras model with optimizer, loss and learning rate schedule
@@ -100,9 +97,9 @@ class AboutSingleSequenceClassification:
         """
         模型训练
         :param data_path: 原始数据保存路径
-        :param epochs:
-        :param batch_size:
-        :param saved_model_path:
+        :param epochs: 训练迭代次数
+        :param batch_size: 训练阶段batch_size
+        :param saved_model_path: 模型保存路径
         :return:
         """
         config = BertConfig.from_pretrained(self.pretrained_model_name, num_labels=self.num_labels)
@@ -122,9 +119,9 @@ class AboutSingleSequenceClassification:
     def evaluate_op(self, trained_model_path, test_data_path, batch_size=64):
         """
         模型 evaluation step
-        :param trained_model_path:
-        :param test_data_path:
-        :param batch_size:
+        :param trained_model_path: 训练好的模型保存路径
+        :param test_data_path: 测试集保存路径
+        :param batch_size: evaluation阶段batch_size
         :return:
         """
         # 模型加载
@@ -145,7 +142,7 @@ class AboutSingleSequenceClassification:
 
     def predict_op(self, trained_model_path, batch_text):
         """
-        :param trained_model_path:
+        :param trained_model_path: 训练好的模型保存路径
         :param batch_text: [['想了解下您会想看哪款车型', '是想请问下您当时买的是哪款车呢'], ['今天天气很差', '今天天气很棒']]
         :return:
         """
