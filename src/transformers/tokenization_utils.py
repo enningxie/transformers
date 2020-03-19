@@ -981,7 +981,7 @@ class PreTrainedTokenizer(object):
         self,
         batch_text_or_text_pairs=None,
         add_special_tokens=True,
-        max_length=None,
+        max_length=64,
         stride=0,
         truncation_strategy="longest_first",
         pad_to_max_length=False,
@@ -1083,8 +1083,9 @@ class PreTrainedTokenizer(object):
             second_ids = get_input_ids(pair_ids) if pair_ids is not None else None
             input_ids.append((first_ids, second_ids))
 
-        if max_length is None and pad_to_max_length:
-
+        # if max_length is None and pad_to_max_length
+        # padding 阶段，max_length设置为当前batch中Sequence最大长度和预设的max_length其中的最小值
+        if pad_to_max_length:
             def total_sequence_length(input_pairs):
                 first_ids, second_ids = input_pairs
                 return len(first_ids) + (
@@ -1092,8 +1093,7 @@ class PreTrainedTokenizer(object):
                     if second_ids is None
                     else (len(second_ids) + self.num_added_tokens(pair=True))
                 )
-
-            max_length = max([total_sequence_length(ids) for ids in input_ids])
+            max_length = min(max([total_sequence_length(ids) for ids in input_ids]), max_length)
 
         batch_outputs = {}
         for first_ids, second_ids in input_ids:

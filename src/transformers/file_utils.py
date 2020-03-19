@@ -41,6 +41,8 @@ DUMMY_INPUTS = [[7, 6, 0, 0, 1], [1, 2, 3, 0, 0], [0, 0, 0, 4, 5]]
 TF2_WEIGHTS_NAME = "tf_model.h5"
 WEIGHTS_NAME = "pytorch_model.bin"
 TF_WEIGHTS_NAME = "model.ckpt"
+LABEL2ID_NAME = 'label2id.pkl'
+ID2CLASS_NAME = 'id2class.pkl'
 ROOT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), "../.."))
 
 
