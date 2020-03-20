@@ -5,6 +5,7 @@
 import logging
 import os
 import pickle
+import pandas as pd
 
 from .file_utils import is_tf_available
 from .data_utils import DataProcessor, InputExample, InputFeatures
@@ -227,11 +228,15 @@ class SingleSentenceClassificationProcessor(DataProcessor):
     # todo Just for test
     def get_test_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(self._read_tsv(os.path.join(data_dir, "dev.tsv")), "test")
+        return self._create_examples(self._read_tsv(os.path.join(data_dir, "test.tsv")), "test")
 
-    def get_labels(self):
+    def get_labels(self, data_dir=None):
         """See base class."""
-        return self.labels
+        if data_dir is None:
+            return self.labels
+        else:
+            return sorted(pd.read_csv(os.path.join(data_dir, "train.tsv"), header=0, sep='\t',
+                                      dtype={'label': str}).label.unique())
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
@@ -245,7 +250,8 @@ class SingleSentenceClassificationProcessor(DataProcessor):
             label = line[1]  # label
             added_labels.add(label)
             examples.append(InputExample(guid=guid, text_a=text, text_b=None, label=label))
-        self.labels = sorted(list(added_labels))
+        if set_type == 'train':
+            self.labels = sorted(list(added_labels))
         return examples
 
 

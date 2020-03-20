@@ -3,6 +3,7 @@
 """Single sequence classification"""
 import os
 import logging
+import pandas as pd
 import tensorflow as tf
 from src.transformers.file_utils import ROOT_PATH, CONFIG_NAME, LABEL2ID_NAME, ID2CLASS_NAME
 from src.transformers.configuration_bert import BertConfig
@@ -48,7 +49,6 @@ class AboutSingleSequenceClassification:
         train_examples = self.data_processor.get_train_examples(data_path)
         train_label_list = self.data_processor.get_labels()
         valid_examples = self.data_processor.get_dev_examples(data_path)
-        valid_label_list = self.data_processor.get_labels()
 
         # calculate steps
         train_steps = calculate_steps(len(train_examples), batch_size)
@@ -59,7 +59,7 @@ class AboutSingleSequenceClassification:
                                                      label_list=train_label_list, task=self.task, return_tensors='tf',
                                                      save_label_map_path=os.path.join(data_path, 'label2id.pkl'))
         valid_dataset = convert_examples_to_features(valid_examples, self.tokenizer, max_length=self.max_length,
-                                                     label_list=valid_label_list, task=self.task, return_tensors='tf')
+                                                     label_list=train_label_list, task=self.task, return_tensors='tf')
 
         # preprocess tf_dataset
         train_dataset = train_dataset.batch(batch_size)
@@ -129,8 +129,8 @@ class AboutSingleSequenceClassification:
         trained_model = self.get_compiled_model(trained_model)
         # 原始数据转tf-dataset
         test_examples = self.data_processor.get_test_examples(test_data_path)
-        test_label_list = self.data_processor.get_labels()
-
+        test_label_list = self.data_processor.get_labels(test_data_path)
+        print(test_label_list)
         test_steps = calculate_steps(len(test_examples), batch_size)
         test_dataset = convert_examples_to_features(test_examples, self.tokenizer, max_length=self.max_length,
                                                     label_list=test_label_list, task=self.task, return_tensors='tf')
@@ -155,21 +155,23 @@ class AboutSingleSequenceClassification:
 
 
 if __name__ == '__main__':
-    raw_data_path = os.path.join(ROOT_PATH, 'data/souche_salesman')
-    tmp_spc_obj = AboutSingleSequenceClassification('chinese-rbt3',
+    raw_data_path = os.path.join(ROOT_PATH, 'data/souche_salesman1')
+    tmp_spc_obj = AboutSingleSequenceClassification("chinese-rbt3",
                                                     num_labels=25,
                                                     max_length=32)
     # #### training step ####
-    # tmp_saved_model_path = os.path.join(ROOT_PATH, 'examples/saved_models/ssc_2')
+    # tmp_saved_model_path = os.path.join(ROOT_PATH, 'examples/saved_models/ssc_3')
     # tmp_spc_obj.train_op(raw_data_path, epochs=5, batch_size=64, saved_model_path=tmp_saved_model_path)
 
-    tmp_trained_model_path = os.path.join(ROOT_PATH, 'examples/saved_models/ssc_2')
+    tmp_trained_model_path = os.path.join(ROOT_PATH, 'examples/saved_models/ssc_3')
 
     # #### evaluate step ####
     # tmp_spc_obj.evaluate_op(tmp_trained_model_path, raw_data_path)
 
     #### predict step ####
-    tmp_batch_text = ['有空可以到店里面先试驾一下啊', '最近没时间']
+    # tmp_batch_text = ['有空可以到店里面先试驾一下啊', '最近没时间']
+    tmp_batch_text = pd.read_csv(os.path.join(raw_data_path, "test.tsv"), header=0, sep='\t',
+                                 dtype={'label': str}).sentence.tolist()
     tmp_pred_label = tmp_spc_obj.predict_op(tmp_trained_model_path, tmp_batch_text)
 
     tmp_label2id_path = os.path.join(raw_data_path, LABEL2ID_NAME)
@@ -181,5 +183,7 @@ if __name__ == '__main__':
     print(label2id)
     print(id2class)
 
-    for tmp_text, tmp_label in zip(tmp_batch_text, tmp_pred_label):
-        print(f'{tmp_text} --> {id2class[int(label2id[tmp_label])]}')
+    with open(os.path.join(raw_data_path, 'test_result.txt'), 'w') as f:
+        for tmp_text, tmp_label in zip(tmp_batch_text, tmp_pred_label):
+            print(f'{tmp_text} --> {id2class[int(label2id[tmp_label])]}')
+            f.write(f'{id2class[int(label2id[tmp_label])]}' + '\t' + f'{tmp_text}' + '\n')
