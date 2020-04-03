@@ -15,16 +15,13 @@
 # limitations under the License.
 """ BERT model configuration """
 
-
 import logging
 import os
 
 from .configuration_utils import PretrainedConfig
 from .file_utils import ROOT_PATH
 
-
 logger = logging.getLogger(__name__)
-
 
 # todo 替换成保存预训练模型的相对路径
 # "bert-base-uncased": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-config.json"
@@ -32,26 +29,40 @@ BERT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
     "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm/config.json"),
     "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm-ext/config.json"),
     "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbt3/config.json"),
-    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbtl3/config.json")
+    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbtl3/config.json"),
+    "chinese-roberta-wwm-ext": os.path.join(ROOT_PATH,
+                                            "pretrained_models/tensorflow2.x/chinese-roberta-wwm-ext/config.json"),
+    "chinese-roberta-wwm-ext-large": os.path.join(ROOT_PATH,
+                                                  "pretrained_models/tensorflow2.x/chinese-roberta-wwm-ext-large/config.json"),
+    "roberta_chinese_3L312_clue_tiny": os.path.join(ROOT_PATH,
+                                                    "pretrained_models/tensorflow2.x/roberta_chinese_3L312_clue_tiny/config.json"),
+    "roberta_chinese_3L768_clue_tiny": os.path.join(ROOT_PATH,
+                                                    "pretrained_models/tensorflow2.x/roberta_chinese_3L768_clue_tiny/config.json"),
+    "roberta_chinese_clue_tiny": os.path.join(ROOT_PATH,
+                                              "pretrained_models/tensorflow2.x/roberta_chinese_clue_tiny/config.json"),
+    "roberta_chinese_pair_tiny": os.path.join(ROOT_PATH,
+                                              "pretrained_models/tensorflow2.x/roberta_chinese_pair_tiny/config.json"),
+    "chinese_simbert_zhuiyi": os.path.join(ROOT_PATH,
+                                                    "pretrained_models/tensorflow2.x/chinese_simbert_zhuiyi/config.json")
 }
 
 
 class BertConfig(PretrainedConfig):
     r"""
-        This is the configuration class to store the configuration of a :class:`~transformers.BertModel`.
+        This is the configuration class to store the configuration of a :class:`~xz_transformers.BertModel`.
         It is used to instantiate an BERT model according to the specified arguments, defining the model
         architecture. Instantiating a configuration with the defaults will yield a similar configuration to that of
         the BERT `bert-base-uncased <https://huggingface.co/bert-base-uncased>`__ architecture.
 
-        Configuration objects inherit from  :class:`~transformers.PretrainedConfig` and can be used
-        to control the model outputs. Read the documentation from  :class:`~transformers.PretrainedConfig`
+        Configuration objects inherit from  :class:`~xz_transformers.PretrainedConfig` and can be used
+        to control the model outputs. Read the documentation from  :class:`~xz_transformers.PretrainedConfig`
         for more information.
 
 
         Args:
             vocab_size (:obj:`int`, optional, defaults to 30522):
                 Vocabulary size of the BERT model. Defines the different tokens that
-                can be represented by the `inputs_ids` passed to the forward method of :class:`~transformers.BertModel`.
+                can be represented by the `inputs_ids` passed to the forward method of :class:`~xz_transformers.BertModel`.
             hidden_size (:obj:`int`, optional, defaults to 768):
                 Dimensionality of the encoder layers and the pooler layer.
             num_hidden_layers (:obj:`int`, optional, defaults to 12):
@@ -71,7 +82,7 @@ class BertConfig(PretrainedConfig):
                 The maximum sequence length that this model might ever be used with.
                 Typically set this to something large just in case (e.g., 512 or 1024 or 2048).
             type_vocab_size (:obj:`int`, optional, defaults to 2):
-                The vocabulary size of the `token_type_ids` passed into :class:`~transformers.BertModel`.
+                The vocabulary size of the `token_type_ids` passed into :class:`~xz_transformers.BertModel`.
             initializer_range (:obj:`float`, optional, defaults to 0.02):
                 The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
             layer_norm_eps (:obj:`float`, optional, defaults to 1e-12):
@@ -79,7 +90,7 @@ class BertConfig(PretrainedConfig):
 
         Example::
 
-            from transformers import BertModel, BertConfig
+            from xz_transformers import BertModel, BertConfig
 
             # Initializing a BERT bert-base-uncased style configuration
             configuration = BertConfig()
@@ -98,20 +109,20 @@ class BertConfig(PretrainedConfig):
     model_type = "bert"
 
     def __init__(
-        self,
-        vocab_size=30522,
-        hidden_size=768,
-        num_hidden_layers=12,
-        num_attention_heads=12,
-        intermediate_size=3072,
-        hidden_act="gelu",
-        hidden_dropout_prob=0.1,
-        attention_probs_dropout_prob=0.1,
-        max_position_embeddings=512,
-        type_vocab_size=2,
-        initializer_range=0.02,
-        layer_norm_eps=1e-12,
-        **kwargs
+            self,
+            vocab_size=30522,
+            hidden_size=768,
+            num_hidden_layers=12,
+            num_attention_heads=12,
+            intermediate_size=3072,
+            hidden_act="gelu",
+            hidden_dropout_prob=0.1,
+            attention_probs_dropout_prob=0.1,
+            max_position_embeddings=512,
+            type_vocab_size=2,
+            initializer_range=0.02,
+            layer_norm_eps=1e-12,
+            **kwargs
     ):
         super().__init__(**kwargs)
 

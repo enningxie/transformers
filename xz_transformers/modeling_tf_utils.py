@@ -48,16 +48,16 @@ class TFModelUtilsMixin:
 class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin):
     r""" Base class for all TF models.
 
-        :class:`~transformers.TFPreTrainedModel` takes care of storing the configuration of the models and handles methods for loading/downloading/saving models
+        :class:`~xz_transformers.TFPreTrainedModel` takes care of storing the configuration of the models and handles methods for loading/downloading/saving models
         as well as a few methods common to all models to (i) resize the input embeddings and (ii) prune heads in the self-attention heads.
 
         Class attributes (overridden by derived classes):
-            - ``config_class``: a class derived from :class:`~transformers.PretrainedConfig` to use as configuration class for this model architecture.
+            - ``config_class``: a class derived from :class:`~xz_transformers.PretrainedConfig` to use as configuration class for this model architecture.
             - ``pretrained_model_archive_map``: a python ``dict`` of with `short-cut-names` (string) as keys and `url` (string) of associated pretrained weights as values.
             - ``load_tf_weights``: a python ``method`` for loading a TensorFlow checkpoint in a PyTorch model, taking as arguments:
 
-                - ``model``: an instance of the relevant subclass of :class:`~transformers.PreTrainedModel`,
-                - ``config``: an instance of the relevant subclass of :class:`~transformers.PretrainedConfig`,
+                - ``model``: an instance of the relevant subclass of :class:`~xz_transformers.PreTrainedModel`,
+                - ``config``: an instance of the relevant subclass of :class:`~xz_transformers.PretrainedConfig`,
                 - ``path``: a path (string) to the TensorFlow checkpoint.
 
             - ``base_model_prefix``: a string indicating the attribute associated to the base model in derived classes of the same architecture adding modules on top of the base model.
@@ -172,7 +172,7 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin):
 
     def save_pretrained(self, save_directory):
         """ Save a model and its configuration file to a directory, so that it
-            can be re-loaded using the `:func:`~transformers.PreTrainedModel.from_pretrained`` class method.
+            can be re-loaded using the `:func:`~xz_transformers.PreTrainedModel.from_pretrained`` class method.
         """
         make_dir(save_directory)
         assert os.path.isdir(
@@ -201,19 +201,19 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin):
 
                 - a string with the `shortcut name` of a pre-trained model to load from cache or download, e.g.: ``bert-base-uncased``.
                 - a string with the `identifier name` of a pre-trained model that was user-uploaded to our S3, e.g.: ``dbmdz/bert-base-german-cased``.
-                - a path to a `directory` containing model weights saved using :func:`~transformers.PreTrainedModel.save_pretrained`, e.g.: ``./my_model_directory/``.
+                - a path to a `directory` containing model weights saved using :func:`~xz_transformers.PreTrainedModel.save_pretrained`, e.g.: ``./my_model_directory/``.
                 - a path or url to a `PyTorch state_dict saved_models file` (e.g. `./pt_model/pytorch_model.bin`). In this case, ``from_pt`` should be set to True and a configuration object should be provided as ``config`` argument. This loading path is slower than converting the PyTorch checkpoint in a TensorFlow model using the provided conversion scripts and loading the TensorFlow model afterwards.
 
             model_args: (`optional`) Sequence of positional arguments:
                 All remaning positional arguments will be passed to the underlying model's ``__init__`` method
 
             config: (`optional`) one of:
-                    - an instance of a class derived from :class:`~transformers.PretrainedConfig`, or
-                    - a string valid as input to :func:`~transformers.PretrainedConfig.from_pretrained()`
+                    - an instance of a class derived from :class:`~xz_transformers.PretrainedConfig`, or
+                    - a string valid as input to :func:`~xz_transformers.PretrainedConfig.from_pretrained()`
                 Configuration for the model to use instead of an automatically loaded configuation. Configuration can be automatically loaded when:
 
                 - the model is a model provided by the library (loaded with the ``shortcut-name`` string of a pretrained model), or
-                - the model was saved using :func:`~transformers.PreTrainedModel.save_pretrained` and is reloaded by suppling the saved_models directory.
+                - the model was saved using :func:`~xz_transformers.PreTrainedModel.save_pretrained` and is reloaded by suppling the saved_models directory.
                 - the model is loaded by suppling a local directory as ``pretrained_model_name_or_path`` and a configuration JSON file named `config.json` is found in the directory.
 
             from_pt: (`optional`) boolean, default False:
@@ -240,11 +240,11 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin):
                 Can be used to update the configuration object (after it being loaded) and initiate the model. (e.g. ``output_attention=True``). Behave differently depending on whether a `config` is provided or automatically loaded:
 
                 - If a configuration is provided with ``config``, ``**kwargs`` will be directly passed to the underlying model's ``__init__`` method (we assume all relevant updates to the configuration have already been done)
-                - If a configuration is not provided, ``kwargs`` will be first passed to the configuration class initialization function (:func:`~transformers.PretrainedConfig.from_pretrained`). Each key of ``kwargs`` that corresponds to a configuration attribute will be used to override said attribute with the supplied ``kwargs`` value. Remaining keys that do not correspond to any configuration attribute will be passed to the underlying model's ``__init__`` function.
+                - If a configuration is not provided, ``kwargs`` will be first passed to the configuration class initialization function (:func:`~xz_transformers.PretrainedConfig.from_pretrained`). Each key of ``kwargs`` that corresponds to a configuration attribute will be used to override said attribute with the supplied ``kwargs`` value. Remaining keys that do not correspond to any configuration attribute will be passed to the underlying model's ``__init__`` function.
 
         Examples::
 
-            # For examples purposes. Not runnable.
+            # For tasks purposes. Not runnable.
             model = BertModel.from_pretrained('bert-base-uncased')    # Download model and configuration from S3 and cache.
             model = BertModel.from_pretrained('./test/saved_model/')  # E.g. model was saved using `save_pretrained('./test/saved_model/')`
             model = BertModel.from_pretrained('bert-base-uncased', output_attention=True)  # Update configuration during loading
@@ -585,7 +585,7 @@ def make_dir(directory):
     :return:
     """
     if not os.path.exists(directory):
-        os.mkdir(directory)
+        os.makedirs(directory)
 
 
 def load_serialized_data(data_dir):

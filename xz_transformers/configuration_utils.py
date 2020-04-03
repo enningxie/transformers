@@ -35,7 +35,7 @@ class PretrainedConfig(object):
 
         Class attributes (overridden by derived classes):
             - ``pretrained_config_archive_map``: a python ``dict`` with `shortcut names` (string) as keys and `url` (string) of associated pretrained model configurations as values.
-            - ``model_type``: a string that identifies the model type, that we serialize into the JSON file, and that we use to recreate the correct object in :class:`~transformers.AutoConfig`.
+            - ``model_type``: a string that identifies the model type, that we serialize into the JSON file, and that we use to recreate the correct object in :class:`~xz_transformers.AutoConfig`.
 
         Args:
             finetuning_task (:obj:`string` or :obj:`None`, `optional`, defaults to :obj:`None`):
@@ -98,7 +98,7 @@ class PretrainedConfig(object):
     def save_pretrained(self, save_directory):
         """
         Save a configuration object to the directory `save_directory`, so that it
-        can be re-loaded using the :func:`~transformers.PretrainedConfig.from_pretrained` class method.
+        can be re-loaded using the :func:`~xz_transformers.PretrainedConfig.from_pretrained` class method.
 
         Args:
             save_directory (:obj:`string`):
@@ -118,7 +118,7 @@ class PretrainedConfig(object):
     def from_pretrained(cls, pretrained_model_name_or_path, **kwargs) -> "PretrainedConfig":
         r"""
 
-        Instantiate a :class:`~transformers.PretrainedConfig` (or a derived class) from a pre-trained model configuration.
+        Instantiate a :class:`~xz_transformers.PretrainedConfig` (or a derived class) from a pre-trained model configuration.
 
         Args:
             pretrained_model_name_or_path (:obj:`string`):
@@ -128,7 +128,7 @@ class PretrainedConfig(object):
                   - a string with the `identifier name` of a pre-trained model configuration that was user-uploaded to
                     our S3, e.g.: ``dbmdz/bert-base-german-cased``.
                   - a path to a `directory` containing a configuration file saved using the
-                    :func:`~transformers.PretrainedConfig.save_pretrained` method, e.g.: ``./my_model_directory/``.
+                    :func:`~xz_transformers.PretrainedConfig.save_pretrained` method, e.g.: ``./my_model_directory/``.
                   - a path or url to a saved configuration JSON `file`, e.g.:
                     ``./my_model_directory/configuration.json``.
             cache_dir (:obj:`string`, `optional`):
@@ -157,7 +157,7 @@ class PretrainedConfig(object):
 
         Examples::
 
-            # We can't instantiate directly the base class `PretrainedConfig` so let's show the examples on a
+            # We can't instantiate directly the base class `PretrainedConfig` so let's show the tasks on a
             # derived class: BertConfig
             config = BertConfig.from_pretrained('bert-base-uncased')    # Download configuration from S3 and cache.
             config = BertConfig.from_pretrained('./test/saved_model/')  # E.g. config (or model) was saved using `save_pretrained('./test/saved_model/')`
@@ -220,7 +220,7 @@ class PretrainedConfig(object):
         Args:
             config_dict (:obj:`Dict[str, any]`):
                 Dictionary that will be used to instantiate the configuration object. Such a dictionary can be retrieved
-                from a pre-trained checkpoint by leveraging the :func:`~transformers.PretrainedConfig.get_config_dict`
+                from a pre-trained checkpoint by leveraging the :func:`~xz_transformers.PretrainedConfig.get_config_dict`
                 method.
             kwargs (:obj:`Dict[str, any]`):
                 Additional parameters from which to initialize the configuration object.

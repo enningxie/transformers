@@ -10,16 +10,16 @@ logger = logging.getLogger(__name__)
 
 class InputExample(object):
     """
-    A single training/test examples for simple sequence classification.
+    A single training/test tasks for simple sequence classification.
 
     Args:
-        guid: Unique id for the examples.
+        guid: Unique id for the tasks.
         text_a: string. The untokenized text of the first sequence. For single
             sequence tasks, only this sequence must be specified.
         text_b: (Optional) string. The untokenized text of the second sequence.
             Only must be specified for sequence pair tasks.
-        label: (Optional) string. The label of the examples. This should be
-            specified for train and dev examples, but not for test examples.
+        label: (Optional) string. The label of the tasks. This should be
+            specified for train and dev tasks, but not for test tasks.
     """
 
     def __init__(self, guid, text_a, text_b=None, label=None):
@@ -77,10 +77,10 @@ class DataProcessor(object):
     """Base class for data converters for sequence classification data sets."""
 
     def get_example_from_tensor_dict(self, tensor_dict):
-        """Gets an examples from a dict with tensorflow tensors
+        """Gets an tasks from a dict with tensorflow tensors
         Args:
             tensor_dict: Keys and values should match the corresponding Glue
-                tensorflow_dataset examples.
+                tensorflow_dataset tasks.
         """
         raise NotImplementedError()
 
@@ -102,7 +102,7 @@ class DataProcessor(object):
 
     def tfds_map(self, example):
         """Some tensorflow_datasets datasets are not formatted the same way the GLUE datasets are.
-        This method converts examples to the correct format."""
+        This method converts tasks to the correct format."""
         if len(self.get_labels()) > 1:
             example.label = self.get_labels()[int(example.label)]
         return example

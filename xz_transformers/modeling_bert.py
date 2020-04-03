@@ -36,7 +36,19 @@ BERT_PRETRAINED_MODEL_ARCHIVE_MAP = {
     "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/pytorch/chinese-bert-wwm/pytorch_model.bin"),
     "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/pytorch/chinese-bert-wwm-ext/pytorch_model.bin"),
     "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/pytorch/chinese-rbt3/pytorch_model.bin"),
-    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/pytorch/chinese-rbtl3/pytorch_model.bin")
+    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/pytorch/chinese-rbtl3/pytorch_model.bin"),
+    "chinese-roberta-wwm-ext": os.path.join(ROOT_PATH,
+                                            "pretrained_models/pytorch/chinese-roberta-wwm-ext/pytorch_model.bin"),
+    "chinese-roberta-wwm-ext-large": os.path.join(ROOT_PATH,
+                                                  "pretrained_models/pytorch/chinese-roberta-wwm-ext-large/pytorch_model.bin"),
+    "roberta_chinese_3L312_clue_tiny": os.path.join(ROOT_PATH,
+                                                    "pretrained_models/pytorch/roberta_chinese_3L312_clue_tiny/pytorch_model.bin"),
+    "roberta_chinese_3L768_clue_tiny": os.path.join(ROOT_PATH,
+                                                    "pretrained_models/pytorch/roberta_chinese_3L768_clue_tiny/pytorch_model.bin"),
+    "roberta_chinese_clue_tiny": os.path.join(ROOT_PATH,
+                                              "pretrained_models/pytorch/roberta_chinese_clue_tiny/pytorch_model.bin"),
+    "roberta_chinese_pair_tiny": os.path.join(ROOT_PATH,
+                                              "pretrained_models/pytorch/roberta_chinese_pair_tiny/pytorch_model.bin")
 }
 
 
@@ -517,9 +529,9 @@ BERT_START_DOCSTRING = r"""
     usage and behavior.
 
     Parameters:
-        config (:class:`~transformers.BertConfig`): Model configuration class with all the parameters of the model.
+        config (:class:`~xz_transformers.BertConfig`): Model configuration class with all the parameters of the model.
             Initializing with a config file does not load the weights associated with the model, only the configuration.
-            Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model weights.
+            Check out the :meth:`~xz_transformers.PreTrainedModel.from_pretrained` method to load the model weights.
 """
 
 BERT_INPUTS_DOCSTRING = r"""
@@ -527,9 +539,9 @@ BERT_INPUTS_DOCSTRING = r"""
         input_ids (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`):
             Indices of input sequence tokens in the vocabulary.
 
-            Indices can be obtained using :class:`transformers.BertTokenizer`.
-            See :func:`transformers.PreTrainedTokenizer.encode` and
-            :func:`transformers.PreTrainedTokenizer.encode_plus` for details.
+            Indices can be obtained using :class:`xz_transformers.BertTokenizer`.
+            See :func:`xz_transformers.PreTrainedTokenizer.encode` and
+            :func:`xz_transformers.PreTrainedTokenizer.encode_plus` for details.
 
             `What are input IDs? <../glossary.html#input-ids>`__
         attention_mask (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`, defaults to :obj:`None`):
@@ -622,7 +634,7 @@ class BertModel(BertPreTrainedModel):
     ):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         last_hidden_state (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`):
             Sequence of hidden-states at the output of the last layer of the model.
         pooler_output (:obj:`torch.FloatTensor`: of shape :obj:`(batch_size, hidden_size)`):
@@ -648,7 +660,7 @@ class BertModel(BertPreTrainedModel):
 
     Examples::
 
-        from transformers import BertModel, BertTokenizer
+        from xz_transformers import BertModel, BertTokenizer
         import torch
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -810,7 +822,7 @@ class BertForPreTraining(BertPreTrainedModel):
             ``1`` indicates sequence B is a random sequence.
 
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         loss (`optional`, returned when ``masked_lm_labels`` is provided) ``torch.FloatTensor`` of shape ``(1,)``:
             Total loss as the sum of the masked language modeling loss and the next sequence prediction (classification) loss.
         prediction_scores (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, config.vocab_size)`)
@@ -833,7 +845,7 @@ class BertForPreTraining(BertPreTrainedModel):
 
     Examples::
 
-        from transformers import BertTokenizer, BertForPreTraining
+        from xz_transformers import BertTokenizer, BertForPreTraining
         import torch
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -910,7 +922,7 @@ class BertForMaskedLM(BertPreTrainedModel):
             in ``[0, ..., config.vocab_size]``
 
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         masked_lm_loss (`optional`, returned when ``masked_lm_labels`` is provided) ``torch.FloatTensor`` of shape ``(1,)``:
             Masked language modeling loss.
         ltr_lm_loss (:obj:`torch.FloatTensor` of shape :obj:`(1,)`, `optional`, returned when :obj:`lm_labels` is provided):
@@ -931,7 +943,7 @@ class BertForMaskedLM(BertPreTrainedModel):
 
         Examples::
 
-            from transformers import BertTokenizer, BertForMaskedLM
+            from xz_transformers import BertTokenizer, BertForMaskedLM
             import torch
 
             tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -1009,7 +1021,7 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
             ``1`` indicates sequence B is a random sequence.
 
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         loss (:obj:`torch.FloatTensor` of shape :obj:`(1,)`, `optional`, returned when :obj:`next_sentence_label` is provided):
             Next sequence prediction (classification) loss.
         seq_relationship_scores (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, 2)`):
@@ -1028,7 +1040,7 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
 
     Examples::
 
-        from transformers import BertTokenizer, BertForNextSentencePrediction
+        from xz_transformers import BertTokenizer, BertForNextSentencePrediction
         import torch
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -1092,7 +1104,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
             If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
 
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         loss (:obj:`torch.FloatTensor` of shape :obj:`(1,)`, `optional`, returned when :obj:`label` is provided):
             Classification (or regression if config.num_labels==1) loss.
         logits (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, config.num_labels)`):
@@ -1111,7 +1123,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
     Examples::
 
-        from transformers import BertTokenizer, BertForSequenceClassification
+        from xz_transformers import BertTokenizer, BertForSequenceClassification
         import torch
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -1181,7 +1193,7 @@ class BertForMultipleChoice(BertPreTrainedModel):
             of the input tensors. (see `input_ids` above)
 
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         loss (:obj:`torch.FloatTensor` of shape `(1,)`, `optional`, returned when :obj:`labels` is provided):
             Classification loss.
         classification_scores (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, num_choices)`):
@@ -1202,7 +1214,7 @@ class BertForMultipleChoice(BertPreTrainedModel):
 
     Examples::
 
-        from transformers import BertTokenizer, BertForMultipleChoice
+        from xz_transformers import BertTokenizer, BertForMultipleChoice
         import torch
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -1275,7 +1287,7 @@ class BertForTokenClassification(BertPreTrainedModel):
             Indices should be in ``[0, ..., config.num_labels - 1]``.
 
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         loss (:obj:`torch.FloatTensor` of shape :obj:`(1,)`, `optional`, returned when ``labels`` is provided) :
             Classification loss.
         scores (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, config.num_labels)`)
@@ -1294,7 +1306,7 @@ class BertForTokenClassification(BertPreTrainedModel):
 
     Examples::
 
-        from transformers import BertTokenizer, BertForTokenClassification
+        from xz_transformers import BertTokenizer, BertForTokenClassification
         import torch
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -1372,7 +1384,7 @@ class BertForQuestionAnswering(BertPreTrainedModel):
             Position outside of the sequence are not taken into account for computing the loss.
 
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         loss (:obj:`torch.FloatTensor` of shape :obj:`(1,)`, `optional`, returned when :obj:`labels` is provided):
             Total span extraction loss is the sum of a Cross-Entropy for the start and end positions.
         start_scores (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length,)`):
@@ -1393,7 +1405,7 @@ class BertForQuestionAnswering(BertPreTrainedModel):
 
     Examples::
 
-        from transformers import BertTokenizer, BertForQuestionAnswering
+        from xz_transformers import BertTokenizer, BertForQuestionAnswering
         import torch
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')

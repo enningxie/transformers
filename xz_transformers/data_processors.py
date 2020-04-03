@@ -29,29 +29,29 @@ def convert_examples_to_features(
         pad_token_segment_id=0,
         mask_padding_with_zero=True,
         return_tensors=None,
-        save_label_map_path=None
+        save_id2label_path=None
 ):
     """
     Loads a data file into a list of ``InputFeatures``
 
     Args:
-        examples: List of ``InputExamples`` or ``tf.data.Dataset`` containing the examples.
-        tokenizer: Instance of a tokenizer that will tokenize the examples
-        max_length: Maximum examples length
+        examples: List of ``InputExamples`` or ``tf.data.Dataset`` containing the tasks.
+        tokenizer: Instance of a tokenizer that will tokenize the tasks
+        max_length: Maximum tasks length
         task: GLUE task
         label_list: List of labels. Can be obtained from the processor using the ``processor.get_labels()`` method
         output_mode: String indicating the output mode. Either ``regression`` or ``classification``
-        pad_on_left: If set to ``True``, the examples will be padded on the left rather than on the right (default)
+        pad_on_left: If set to ``True``, the tasks will be padded on the left rather than on the right (default)
         pad_token: Padding token
         pad_token_segment_id: The segment ID for the padding token (It is usually 0, but can vary such as for XLNet where it is 4)
         mask_padding_with_zero: If set to ``True``, the attention mask will be filled by ``1`` for actual values
             and by ``0`` for padded values. If set to ``False``, inverts it (``1`` for padded values, ``0`` for
             actual values)
         return_tensors
-        save_label_map_path
+        save_id2label_path
 
     Returns:
-        If the ``examples`` input is a ``tf.data.Dataset``, will return a ``tf.data.Dataset``
+        If the ``tasks`` input is a ``tf.data.Dataset``, will return a ``tf.data.Dataset``
         containing the task-specific features. If the input is a list of ``InputExamples``, will return
         a list of task-specific ``InputFeatures`` which can be fed to the model.
 
@@ -65,17 +65,20 @@ def convert_examples_to_features(
             output_mode = output_modes[task]
             logger.info("Using output mode %s for task %s" % (output_mode, task))
     label_map = {label: i for i, label in enumerate(label_list)}
-    if save_label_map_path:
-        label_map_reverse = {tmp_value: tmp_key for tmp_key, tmp_value in label_map.items()}
-        with open(save_label_map_path, 'wb') as f:
-            pickle.dump(label_map_reverse, f, -1)
-        logger.info(f"Saved label map to '{save_label_map_path}'.")
+    if save_id2label_path:
+        id2label = {tmp_value: tmp_key for tmp_key, tmp_value in label_map.items()}
+        tmp_dir = os.path.dirname(save_id2label_path)
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+        with open(save_id2label_path, 'wb') as f:
+            pickle.dump(id2label, f, -1)
+        logger.info(f"Saved label map to '{save_id2label_path}'.")
     len_examples = len(examples)
     all_inputs = []
     batch_length = -1
     for (ex_index, example) in enumerate(examples):
         if ex_index % 10000 == 0:
-            logger.info("Writing examples %d/%d" % (ex_index, len_examples))
+            logger.info("Writing tasks %d/%d" % (ex_index, len_examples))
         inputs = tokenizer.encode_plus(example.text_a, example.text_b, max_length=max_length)
         input_ids = inputs["input_ids"]
         all_inputs.append(inputs)
@@ -189,7 +192,7 @@ class SequencePairClassificationProcessor(DataProcessor):
         return ["0", "1"]
 
     def _create_examples(self, lines, set_type):
-        """Creates examples for the training and dev sets."""
+        """Creates tasks for the training and dev sets."""
         examples = []
         for (i, line) in enumerate(lines):
             if i == 0:
@@ -225,7 +228,6 @@ class SingleSentenceClassificationProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
 
-    # todo Just for test
     def get_test_examples(self, data_dir):
         """See base class."""
         return self._create_examples(self._read_tsv(os.path.join(data_dir, "test.tsv")), "test")
@@ -239,7 +241,7 @@ class SingleSentenceClassificationProcessor(DataProcessor):
                                       dtype={'label': str}).label.unique())
 
     def _create_examples(self, lines, set_type):
-        """Creates examples for the training and dev sets."""
+        """Creates tasks for the training and dev sets."""
         examples = []
         added_labels = set()
         for (i, line) in enumerate(lines):

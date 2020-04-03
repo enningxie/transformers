@@ -33,7 +33,21 @@ TF_BERT_PRETRAINED_MODEL_ARCHIVE_MAP = {
     "chinese-bert-wwm": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm/tf_model.h5"),
     "chinese-bert-wwm-ext": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-bert-wwm-ext/tf_model.h5"),
     "chinese-rbt3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbt3/tf_model.h5"),
-    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbtl3/tf_model.h5")
+    "chinese-rbtl3": os.path.join(ROOT_PATH, "pretrained_models/tensorflow2.x/chinese-rbtl3/tf_model.h5"),
+    "chinese-roberta-wwm-ext": os.path.join(ROOT_PATH,
+                                            "pretrained_models/tensorflow2.x/chinese-roberta-wwm-ext/tf_model.h5"),
+    "chinese-roberta-wwm-ext-large": os.path.join(ROOT_PATH,
+                                                  "pretrained_models/tensorflow2.x/chinese-roberta-wwm-ext-large/tf_model.h5"),
+    "roberta_chinese_3L312_clue_tiny": os.path.join(ROOT_PATH,
+                                                    "pretrained_models/tensorflow2.x/roberta_chinese_3L312_clue_tiny/tf_model.h5"),
+    "roberta_chinese_3L768_clue_tiny": os.path.join(ROOT_PATH,
+                                                    "pretrained_models/tensorflow2.x/roberta_chinese_3L768_clue_tiny/tf_model.h5"),
+    "roberta_chinese_clue_tiny": os.path.join(ROOT_PATH,
+                                              "pretrained_models/tensorflow2.x/roberta_chinese_clue_tiny/tf_model.h5"),
+    "roberta_chinese_pair_tiny": os.path.join(ROOT_PATH,
+                                              "pretrained_models/tensorflow2.x/roberta_chinese_pair_tiny/tf_model.h5"),
+    "chinese_simbert_zhuiyi": os.path.join(ROOT_PATH,
+                                              "pretrained_models/tensorflow2.x/chinese_simbert_zhuiyi/tf_model.h5")
 }
 
 
@@ -148,6 +162,9 @@ class TFBertEmbeddings(tf.keras.layers.Layer):
         seq_length = input_shape[1]
         if position_ids is None:
             position_ids = tf.range(seq_length, dtype=tf.int32)[tf.newaxis, :]
+        else:
+            # todo 取一个维度
+            position_ids = position_ids[tf.newaxis, 0]
         if token_type_ids is None:
             token_type_ids = tf.fill(input_shape, 0)
 
@@ -610,9 +627,9 @@ BERT_START_DOCSTRING = r"""
           :obj:`model({'input_ids': input_ids, 'token_type_ids': token_type_ids})`
 
     Parameters:
-        config (:class:`~transformers.BertConfig`): Model configuration class with all the parameters of the model.
+        config (:class:`~xz_transformers.BertConfig`): Model configuration class with all the parameters of the model.
             Initializing with a config file does not load the weights associated with the model, only the configuration.
-            Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model weights.
+            Check out the :meth:`~xz_transformers.PreTrainedModel.from_pretrained` method to load the model weights.
 """
 
 BERT_INPUTS_DOCSTRING = r"""
@@ -620,9 +637,9 @@ BERT_INPUTS_DOCSTRING = r"""
         input_ids (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length)`):
             Indices of input sequence tokens in the vocabulary.
 
-            Indices can be obtained using :class:`transformers.BertTokenizer`.
-            See :func:`transformers.PreTrainedTokenizer.encode` and
-            :func:`transformers.PreTrainedTokenizer.encode_plus` for details.
+            Indices can be obtained using :class:`xz_transformers.BertTokenizer`.
+            See :func:`xz_transformers.PreTrainedTokenizer.encode` and
+            :func:`xz_transformers.PreTrainedTokenizer.encode_plus` for details.
 
             `What are input IDs? <../glossary.html#input-ids>`__
         attention_mask (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length)`, `optional`, defaults to :obj:`None`):
@@ -665,7 +682,7 @@ class TFBertModel(TFBertPreTrainedModel):
     def call(self, inputs, **kwargs):
         r"""
     Returns:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         last_hidden_state (:obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`):
             Sequence of hidden-states at the output of the last layer of the model.
         pooler_output (:obj:`tf.Tensor` of shape :obj:`(batch_size, hidden_size)`):
@@ -690,7 +707,7 @@ class TFBertModel(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertModel
+        from xz_transformers import BertTokenizer, TFBertModel
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertModel.from_pretrained('bert-base-uncased')
@@ -717,7 +734,7 @@ class TFBertForPreTraining(TFBertPreTrainedModel):
     def call(self, inputs, **kwargs):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         prediction_scores (:obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length, config.vocab_size)`):
             Prediction scores of the language modeling head (scores for each vocabulary token before SoftMax).
         seq_relationship_scores (:obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length, 2)`):
@@ -736,7 +753,7 @@ class TFBertForPreTraining(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertForPreTraining
+        from xz_transformers import BertTokenizer, TFBertForPreTraining
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertForPreTraining.from_pretrained('bert-base-uncased')
@@ -772,7 +789,7 @@ class TFBertForMaskedLM(TFBertPreTrainedModel):
     def call(self, inputs, **kwargs):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         prediction_scores (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length, config.vocab_size)`):
             Prediction scores of the language modeling head (scores for each vocabulary token before SoftMax).
         hidden_states (:obj:`tuple(tf.Tensor)`, `optional`, returned when :obj:`config.output_hidden_states=True`):
@@ -789,7 +806,7 @@ class TFBertForMaskedLM(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertForMaskedLM
+        from xz_transformers import BertTokenizer, TFBertForMaskedLM
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertForMaskedLM.from_pretrained('bert-base-uncased')
@@ -819,7 +836,7 @@ class TFBertForNextSentencePrediction(TFBertPreTrainedModel):
     def call(self, inputs, **kwargs):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         seq_relationship_scores (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length, 2)`)
             Prediction scores of the next sequence prediction (classification) head (scores of True/False continuation before SoftMax).
         hidden_states (:obj:`tuple(tf.Tensor)`, `optional`, returned when :obj:`config.output_hidden_states=True`):
@@ -836,7 +853,7 @@ class TFBertForNextSentencePrediction(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertForNextSentencePrediction
+        from xz_transformers import BertTokenizer, TFBertForNextSentencePrediction
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertForNextSentencePrediction.from_pretrained('bert-base-uncased')
@@ -870,7 +887,7 @@ class TFBertForSequenceClassification(TFBertPreTrainedModel):
     def call(self, inputs, **kwargs):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         logits (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, config.num_labels)`):
             Classification (or regression if config.num_labels==1) scores (before SoftMax).
         hidden_states (:obj:`tuple(tf.Tensor)`, `optional`, returned when :obj:`config.output_hidden_states=True`):
@@ -887,7 +904,7 @@ class TFBertForSequenceClassification(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertForSequenceClassification
+        from xz_transformers import BertTokenizer, TFBertForSequenceClassification
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased')
@@ -939,7 +956,7 @@ class TFBertForMultipleChoice(TFBertPreTrainedModel):
     ):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         classification_scores (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, num_choices)`:
             `num_choices` is the size of the second dimension of the input tensors. (see `input_ids` above).
 
@@ -958,7 +975,7 @@ class TFBertForMultipleChoice(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertForMultipleChoice
+        from xz_transformers import BertTokenizer, TFBertForMultipleChoice
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertForMultipleChoice.from_pretrained('bert-base-uncased')
@@ -1035,7 +1052,7 @@ class TFBertForTokenClassification(TFBertPreTrainedModel):
     def call(self, inputs, **kwargs):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         scores (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length, config.num_labels)`):
             Classification scores (before SoftMax).
         hidden_states (:obj:`tuple(tf.Tensor)`, `optional`, returned when :obj:`config.output_hidden_states=True`):
@@ -1052,7 +1069,7 @@ class TFBertForTokenClassification(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertForTokenClassification
+        from xz_transformers import BertTokenizer, TFBertForTokenClassification
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertForTokenClassification.from_pretrained('bert-base-uncased')
@@ -1086,7 +1103,7 @@ class TFBertForQuestionAnswering(TFBertPreTrainedModel):
     def call(self, inputs, **kwargs):
         r"""
     Return:
-        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~transformers.BertConfig`) and inputs:
+        :obj:`tuple(torch.FloatTensor)` comprising various elements depending on the configuration (:class:`~xz_transformers.BertConfig`) and inputs:
         start_scores (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length,)`):
             Span-start scores (before SoftMax).
         end_scores (:obj:`Numpy array` or :obj:`tf.Tensor` of shape :obj:`(batch_size, sequence_length,)`):
@@ -1105,7 +1122,7 @@ class TFBertForQuestionAnswering(TFBertPreTrainedModel):
     Examples::
 
         import tensorflow as tf
-        from transformers import BertTokenizer, TFBertForQuestionAnswering
+        from xz_transformers import BertTokenizer, TFBertForQuestionAnswering
 
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         model = TFBertForQuestionAnswering.from_pretrained('bert-base-uncased')

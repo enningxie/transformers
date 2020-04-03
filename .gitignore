@@ -4,10 +4,12 @@ data
 
 tests
 
-src/transformers/tmp
+xz_transformers/tmp
 
-examples/experiments
+xz_transformers/tasks/experiments
 
 .idea
 
-examples/saved_models
+tasks/saved_models
+
+saved_models

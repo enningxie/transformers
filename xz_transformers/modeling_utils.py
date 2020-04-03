@@ -66,16 +66,16 @@ class ModuleUtilsMixin:
 class PreTrainedModel(nn.Module, ModuleUtilsMixin):
     r""" Base class for all models.
 
-        :class:`~transformers.PreTrainedModel` takes care of storing the configuration of the models and handles methods for loading/downloading/saving models
+        :class:`~xz_transformers.PreTrainedModel` takes care of storing the configuration of the models and handles methods for loading/downloading/saving models
         as well as a few methods common to all models to (i) resize the input embeddings and (ii) prune heads in the self-attention heads.
 
         Class attributes (overridden by derived classes):
-            - ``config_class``: a class derived from :class:`~transformers.PretrainedConfig` to use as configuration class for this model architecture.
+            - ``config_class``: a class derived from :class:`~xz_transformers.PretrainedConfig` to use as configuration class for this model architecture.
             - ``pretrained_model_archive_map``: a python ``dict`` of with `short-cut-names` (string) as keys and `url` (string) of associated pretrained weights as values.
             - ``load_tf_weights``: a python ``method`` for loading a TensorFlow checkpoint in a PyTorch model, taking as arguments:
 
-                - ``model``: an instance of the relevant subclass of :class:`~transformers.PreTrainedModel`,
-                - ``config``: an instance of the relevant subclass of :class:`~transformers.PretrainedConfig`,
+                - ``model``: an instance of the relevant subclass of :class:`~xz_transformers.PreTrainedModel`,
+                - ``config``: an instance of the relevant subclass of :class:`~xz_transformers.PretrainedConfig`,
                 - ``path``: a path (string) to the TensorFlow checkpoint.
 
             - ``base_model_prefix``: a string indicating the attribute associated to the base model in derived classes of the same architecture adding modules on top of the base model.
@@ -272,7 +272,7 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin):
 
     def save_pretrained(self, save_directory):
         """ Save a model and its configuration file to a directory, so that it
-            can be re-loaded using the `:func:`~transformers.PreTrainedModel.from_pretrained`` class method.
+            can be re-loaded using the `:func:`~xz_transformers.PreTrainedModel.from_pretrained`` class method.
         """
         assert os.path.isdir(
             save_directory
@@ -308,7 +308,7 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin):
             pretrained_model_name_or_path: either:
               - a string with the `shortcut name` of a pre-trained model to load from cache or download, e.g.: ``bert-base-uncased``.
               - a string with the `identifier name` of a pre-trained model that was user-uploaded to our S3, e.g.: ``dbmdz/bert-base-german-cased``.
-              - a path to a `directory` containing model weights saved using :func:`~transformers.PreTrainedModel.save_pretrained`, e.g.: ``./my_model_directory/``.
+              - a path to a `directory` containing model weights saved using :func:`~xz_transformers.PreTrainedModel.save_pretrained`, e.g.: ``./my_model_directory/``.
               - a path or url to a `tensorflow index checkpoint file` (e.g. `./tf_model/model.ckpt.index`). In this case, ``from_tf`` should be set to True and a configuration object should be provided as ``config`` argument. This loading path is slower than converting the TensorFlow checkpoint in a PyTorch model using the provided conversion scripts and loading the PyTorch model afterwards.
               - None if you are both providing the configuration and state dictionary (resp. with keyword arguments ``config`` and ``state_dict``)
 
@@ -316,17 +316,17 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin):
                 All remaning positional arguments will be passed to the underlying model's ``__init__`` method
 
             config: (`optional`) one of:
-                - an instance of a class derived from :class:`~transformers.PretrainedConfig`, or
-                - a string valid as input to :func:`~transformers.PretrainedConfig.from_pretrained()`
+                - an instance of a class derived from :class:`~xz_transformers.PretrainedConfig`, or
+                - a string valid as input to :func:`~xz_transformers.PretrainedConfig.from_pretrained()`
                 Configuration for the model to use instead of an automatically loaded configuation. Configuration can be automatically loaded when:
                     - the model is a model provided by the library (loaded with the ``shortcut-name`` string of a pretrained model), or
-                    - the model was saved using :func:`~transformers.PreTrainedModel.save_pretrained` and is reloaded by suppling the saved_models directory.
+                    - the model was saved using :func:`~xz_transformers.PreTrainedModel.save_pretrained` and is reloaded by suppling the saved_models directory.
                     - the model is loaded by suppling a local directory as ``pretrained_model_name_or_path`` and a configuration JSON file named `config.json` is found in the directory.
 
             state_dict: (`optional`) dict:
                 an optional state dictionnary for the model to use instead of a state dictionary loaded from saved weights file.
                 This option can be used if you want to create a model from a pretrained configuration but load your own weights.
-                In this case though, you should check if using :func:`~transformers.PreTrainedModel.save_pretrained` and :func:`~transformers.PreTrainedModel.from_pretrained` is not a simpler option.
+                In this case though, you should check if using :func:`~xz_transformers.PreTrainedModel.save_pretrained` and :func:`~xz_transformers.PreTrainedModel.from_pretrained` is not a simpler option.
 
             cache_dir: (`optional`) string:
                 Path to a directory in which a downloaded pre-trained model
@@ -349,11 +349,11 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin):
                 Can be used to update the configuration object (after it being loaded) and initiate the model. (e.g. ``output_attention=True``). Behave differently depending on whether a `config` is provided or automatically loaded:
 
                 - If a configuration is provided with ``config``, ``**kwargs`` will be directly passed to the underlying model's ``__init__`` method (we assume all relevant updates to the configuration have already been done)
-                - If a configuration is not provided, ``kwargs`` will be first passed to the configuration class initialization function (:func:`~transformers.PretrainedConfig.from_pretrained`). Each key of ``kwargs`` that corresponds to a configuration attribute will be used to override said attribute with the supplied ``kwargs`` value. Remaining keys that do not correspond to any configuration attribute will be passed to the underlying model's ``__init__`` function.
+                - If a configuration is not provided, ``kwargs`` will be first passed to the configuration class initialization function (:func:`~xz_transformers.PretrainedConfig.from_pretrained`). Each key of ``kwargs`` that corresponds to a configuration attribute will be used to override said attribute with the supplied ``kwargs`` value. Remaining keys that do not correspond to any configuration attribute will be passed to the underlying model's ``__init__`` function.
 
         Examples::
 
-            # For examples purposes. Not runnable.
+            # For tasks purposes. Not runnable.
             model = BertModel.from_pretrained('bert-base-uncased')    # Download model and configuration from S3 and cache.
             model = BertModel.from_pretrained('./test/saved_model/')  # E.g. model was saved using `save_pretrained('./test/saved_model/')`
             model = BertModel.from_pretrained('bert-base-uncased', output_attention=True)  # Update configuration during loading
@@ -780,7 +780,7 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin):
             eos_token_ids,
             batch_size,
     ):
-        """ Generate sequences for each examples without beam search (num_beams == 1).
+        """ Generate sequences for each tasks without beam search (num_beams == 1).
             All returned sequence are generated independantly.
         """
         # current position / max lengths / length of generated sentences / unfinished sentences
@@ -874,7 +874,7 @@ class PreTrainedModel(nn.Module, ModuleUtilsMixin):
             num_beams,
             vocab_size,
     ):
-        """ Generate sequences for each examples with beam search.
+        """ Generate sequences for each tasks with beam search.
         """
         # Expand input to num beams
         input_ids = input_ids.unsqueeze(1).expand(batch_size, num_beams, cur_len)
@@ -1069,7 +1069,7 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=1.0, filter_value=-float("Inf")
             if top_k > 0: keep only top k tokens with highest probability (top-k filtering).
             if top_p < 1.0: keep the top tokens with cumulative probability >= top_p (nucleus filtering).
                 Nucleus filtering is described in Holtzman et al. (http://arxiv.org/abs/1904.09751)
-            Make sure we keep at least min_tokens_to_keep per batch examples in the output
+            Make sure we keep at least min_tokens_to_keep per batch tasks in the output
         From: https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
     """
     if top_k > 0:
@@ -1283,7 +1283,7 @@ class SQuADHead(nn.Module):
     r""" A SQuAD head inspired by XLNet.
 
     Parameters:
-        config (:class:`~transformers.XLNetConfig`): Model configuration class with all the parameters of the model.
+        config (:class:`~xz_transformers.XLNetConfig`): Model configuration class with all the parameters of the model.
 
     Inputs:
         **hidden_states**: ``torch.FloatTensor`` of shape ``(batch_size, seq_len, hidden_size)``

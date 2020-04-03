@@ -20,8 +20,11 @@ import json
 import logging
 import os
 import re
+import time
+import numpy as np
 from collections import defaultdict
 from contextlib import contextmanager
+from xz_transformers.modeling_tf_utils import shape_list
 
 from tokenizers.implementations import BaseTokenizer
 
@@ -309,6 +312,7 @@ class PreTrainedTokenizer(object):
         self._pad_token = None
         self._cls_token = None
         self._mask_token = None
+        # pad with 0
         self._pad_token_type_id = 0
         self._additional_special_tokens = []
 
@@ -332,41 +336,29 @@ class PreTrainedTokenizer(object):
                     assert isinstance(value, (list, tuple)) and all(isinstance(t, str) for t in value)
                 else:
                     assert isinstance(value, str)
+                # set attributes
                 setattr(self, key, value)
 
     @classmethod
     def from_pretrained(cls, *inputs, **kwargs):
         r"""
-        Instantiate a :class:`~transformers.PreTrainedTokenizer` (or a derived class) from a predefined tokenizer.
+        Instantiate a :class:`~xz_transformers.PreTrainedTokenizer` (or a derived class) from a predefined tokenizer.
 
         Args:
             pretrained_model_name_or_path: either:
 
                 - a string with the `shortcut name` of a predefined tokenizer to load from cache or download, e.g.: ``bert-base-uncased``.
                 - a string with the `identifier name` of a predefined tokenizer that was user-uploaded to our S3, e.g.: ``dbmdz/bert-base-german-cased``.
-                - a path to a `directory` containing vocabulary files required by the tokenizer, for instance saved using the :func:`~transformers.PreTrainedTokenizer.save_pretrained` method, e.g.: ``./my_model_directory/``.
+                - a path to a `directory` containing vocabulary files required by the tokenizer, for instance saved using the :func:`~xz_transformers.PreTrainedTokenizer.save_pretrained` method, e.g.: ``./my_model_directory/``.
                 - (not applicable to all derived classes, deprecated) a path or url to a single saved vocabulary file if and only if the tokenizer only requires a single vocabulary file (e.g. Bert, XLNet), e.g.: ``./my_model_directory/vocab.txt``.
-
-            cache_dir: (`optional`) string:
-                Path to a directory in which a downloaded predefined tokenizer vocabulary files should be cached if the standard cache should not be used.
-
-            force_download: (`optional`) boolean, default False:
-                Force to (re-)download the vocabulary files and override the cached versions if they exists.
-
-            resume_download: (`optional`) boolean, default False:
-                Do not delete incompletely recieved file. Attempt to resume the download if such a file exists.
-
-            proxies: (`optional`) dict, default None:
-                A dictionary of proxy servers to use by protocol or endpoint, e.g.: {'http': 'foo.bar:3128', 'http://hostname': 'foo.bar:4012'}.
-                The proxies are used on each request.
 
             inputs: (`optional`) positional arguments: will be passed to the Tokenizer ``__init__`` method.
 
-            kwargs: (`optional`) keyword arguments: will be passed to the Tokenizer ``__init__`` method. Can be used to set special tokens like ``bos_token``, ``eos_token``, ``unk_token``, ``sep_token``, ``pad_token``, ``cls_token``, ``mask_token``, ``additional_special_tokens``. See parameters in the doc string of :class:`~transformers.PreTrainedTokenizer` for details.
+            kwargs: (`optional`) keyword arguments: will be passed to the Tokenizer ``__init__`` method. Can be used to set special tokens like ``bos_token``, ``eos_token``, ``unk_token``, ``sep_token``, ``pad_token``, ``cls_token``, ``mask_token``, ``additional_special_tokens``. See parameters in the doc string of :class:`~xz_transformers.PreTrainedTokenizer` for details.
 
         Examples::
 
-            # We can't instantiate directly the base class `PreTrainedTokenizer` so let's show our examples on a derived class: BertTokenizer
+            # We can't instantiate directly the base class `PreTrainedTokenizer` so let's show our tasks on a derived class: BertTokenizer
 
             # Download vocabulary from S3 and cache.
             tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -391,8 +383,6 @@ class PreTrainedTokenizer(object):
 
     @classmethod
     def _from_pretrained(cls, pretrained_model_name_or_path, *init_inputs, **kwargs):
-        local_files_only = kwargs.pop("local_files_only", False)
-
         s3_models = list(cls.max_model_input_sizes.keys())
         vocab_files = {}
         init_configuration = {}
@@ -445,7 +435,6 @@ class PreTrainedTokenizer(object):
                         raise EnvironmentError
 
                     vocab_files[file_id] = full_file_name
-        # todo bug
         resolved_vocab_files = vocab_files
         # Prepare tokenizer initialization kwargs
         # Did we saved some inputs and kwargs to reload ?
@@ -519,7 +508,7 @@ class PreTrainedTokenizer(object):
             This won't saved_models modifications other than (added tokens and special token mapping) you may have
             applied to the tokenizer after the instantiation (e.g. modifying tokenizer.do_lower_case after creation).
 
-            This method make sure the full tokenizer can then be re-loaded using the :func:`~transformers.PreTrainedTokenizer.from_pretrained` class method.
+            This method make sure the full tokenizer can then be re-loaded using the :func:`~xz_transformers.PreTrainedTokenizer.from_pretrained` class method.
         """
         if not os.path.isdir(save_directory):
             logger.error("Saving directory ({}) should be a directory".format(save_directory))
@@ -554,7 +543,7 @@ class PreTrainedTokenizer(object):
         """ Save the tokenizer vocabulary to a directory. This method does *NOT* saved_models added tokens
             and special token mappings.
 
-            Please use :func:`~transformers.PreTrainedTokenizer.save_pretrained` `()` to saved_models the full Tokenizer state if you want to reload it using the :func:`~transformers.PreTrainedTokenizer.from_pretrained` class method.
+            Please use :func:`~xz_transformers.PreTrainedTokenizer.save_pretrained` `()` to saved_models the full Tokenizer state if you want to reload it using the :func:`~xz_transformers.PreTrainedTokenizer.from_pretrained` class method.
         """
         raise NotImplementedError
 
@@ -687,6 +676,7 @@ class PreTrainedTokenizer(object):
 
         return added_tokens
 
+    # TODO: tokenize 这是需要仔细处理的点 预测阶段需要使用额外的部分
     def tokenize(self, text, **kwargs):
         """ Converts a string in a sequence of tokens (string), using the tokenizer.
             Split in words for word-based vocabulary or sub-words for sub-word-based
@@ -702,14 +692,15 @@ class PreTrainedTokenizer(object):
         all_special_tokens = self.all_special_tokens
         text = self.prepare_for_tokenization(text, **kwargs)
 
+
         def lowercase_text(t):
             # convert non-special tokens to lowercase
             escaped_special_toks = [re.escape(s_tok) for s_tok in all_special_tokens]
             pattern = r"(" + r"|".join(escaped_special_toks) + r")|" + r"(.+?)"
             return re.sub(pattern, lambda m: m.groups()[0] or m.groups()[1].lower(), t)
-
         if self.init_kwargs.get("do_lower_case", False):
             text = lowercase_text(text)
+
 
         def split_on_token(tok, text):
             result = []
@@ -746,7 +737,7 @@ class PreTrainedTokenizer(object):
                         tokenized_text += [sub_text]
                 text_list = tokenized_text
 
-            return list(
+            return_list = list(
                 itertools.chain.from_iterable(
                     (
                         self._tokenize(token) if token not in self.unique_added_tokens_encoder else [token]
@@ -754,6 +745,7 @@ class PreTrainedTokenizer(object):
                     )
                 )
             )
+            return return_list
 
         added_tokens = self.unique_added_tokens_encoder
         tokenized_text = split_on_tokens(added_tokens, text)
@@ -954,11 +946,11 @@ class PreTrainedTokenizer(object):
             raise NotImplementedError(
                 "return_offset_mapping is not available when using Python tokenizers."
                 "To use this feature, change your tokenizer to one deriving from "
-                "transformers.PreTrainedTokenizerFast."
+                "xz_transformers.PreTrainedTokenizerFast."
                 "More information on available tokenizers at "
                 "https://github.com/huggingface/transformers/pull/2674"
             )
-
+        # todo 该处仅对原始切分的字符进行convert to ids，并没有加入特殊占位符
         first_ids = get_input_ids(text)
         second_ids = get_input_ids(text_pair) if text_pair is not None else None
 
@@ -1052,7 +1044,8 @@ class PreTrainedTokenizer(object):
         def get_input_ids(text):
             if isinstance(text, str):
                 tokens = self.tokenize(text, add_special_tokens=add_special_tokens, **kwargs)
-                return self.convert_tokens_to_ids(tokens)
+                return_ids = self.convert_tokens_to_ids(tokens)
+                return return_ids
             elif isinstance(text, (list, tuple)) and len(text) > 0 and isinstance(text[0], str):
                 return self.convert_tokens_to_ids(text)
             elif isinstance(text, (list, tuple)) and len(text) > 0 and isinstance(text[0], int):
@@ -1066,7 +1059,7 @@ class PreTrainedTokenizer(object):
             raise NotImplementedError(
                 "return_offset_mapping is not available when using Python tokenizers."
                 "To use this feature, change your tokenizer to one deriving from "
-                "transformers.PreTrainedTokenizerFast."
+                "xz_transformers.PreTrainedTokenizerFast."
                 "More information on available tokenizers at "
                 "https://github.com/huggingface/transformers/pull/2674"
             )
@@ -1078,11 +1071,9 @@ class PreTrainedTokenizer(object):
                 ids, pair_ids = ids_or_pair_ids
             else:
                 ids, pair_ids = ids_or_pair_ids, None
-
             first_ids = get_input_ids(ids)
             second_ids = get_input_ids(pair_ids) if pair_ids is not None else None
             input_ids.append((first_ids, second_ids))
-
         # if max_length is None and pad_to_max_length
         # padding 阶段，max_length设置为当前batch中Sequence最大长度和预设的max_length其中的最小值
         if pad_to_max_length:
@@ -1124,7 +1115,6 @@ class PreTrainedTokenizer(object):
                 batch_outputs[key].append(value)
 
         if return_tensors is not None:
-
             # Do the tensor conversion in batch
             for key, value in batch_outputs.items():
                 if return_tensors == "tf" and is_tf_available():
@@ -1152,6 +1142,15 @@ class PreTrainedTokenizer(object):
                         )
                     )
 
+            if return_tensors == 'tf':
+                seq_length = shape_list(batch_outputs['input_ids'])[1]
+                batch_size = shape_list(batch_outputs['input_ids'])[0]
+                position_ids = tf.range(seq_length, dtype=tf.int32)[tf.newaxis, :]
+                position_ids = tf.tile(position_ids, [batch_size, 1])
+                batch_outputs['position_ids'] = position_ids
+        else:
+            for key, value in batch_outputs.items():
+                batch_outputs[key] = np.asarray(value)
         return batch_outputs
 
     def prepare_for_model(
@@ -1233,6 +1232,7 @@ class PreTrainedTokenizer(object):
         # Handle max sequence length
         total_len = len_ids + len_pair_ids + (self.num_added_tokens(pair=pair) if add_special_tokens else 0)
         if max_length and total_len > max_length:
+            # todo
             ids, pair_ids, overflowing_tokens = self.truncate_sequences(
                 ids,
                 pair_ids=pair_ids,
@@ -1246,6 +1246,7 @@ class PreTrainedTokenizer(object):
 
         # Handle special_tokens
         if add_special_tokens:
+            # 单句或句对中增加特殊占位符
             sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
             token_type_ids = self.create_token_type_ids_from_sequences(ids, pair_ids)
         else:
@@ -1257,9 +1258,10 @@ class PreTrainedTokenizer(object):
                 encoded_inputs["special_tokens_mask"] = self.get_special_tokens_mask(ids, pair_ids)
             else:
                 encoded_inputs["special_tokens_mask"] = [0] * len(sequence)
-
+        # todo --> 1
         encoded_inputs["input_ids"] = sequence
         if return_token_type_ids:
+            # todo --> 2
             encoded_inputs["token_type_ids"] = token_type_ids
 
         if max_length and len(encoded_inputs["input_ids"]) > max_length:
@@ -1756,7 +1758,7 @@ class PreTrainedTokenizerFast(PreTrainedTokenizer):
                     "batch_text_or_text_pairs has to be a list (got {})".format(type(batch_text_or_text_pairs))
                 )
 
-            # Avoid thread overhead if only one examples.
+            # Avoid thread overhead if only one tasks.
             if len(batch_text_or_text_pairs) == 1:
                 if isinstance(batch_text_or_text_pairs[0], (tuple, list)):
                     tokens = self._tokenizer.encode(*batch_text_or_text_pairs[0])
