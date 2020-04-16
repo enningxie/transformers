@@ -4,7 +4,9 @@
 import os
 import time
 import tensorflow as tf
+import pandas as pd
 import numpy as np
+from sklearn.metrics import confusion_matrix
 from xz_transformers.file_utils import ROOT_PATH, CONFIG_NAME
 from xz_transformers.configuration_bert import BertConfig
 from xz_transformers.tokenization_bert import BertTokenizer, load_vocab, PRETRAINED_VOCAB_FILES_MAP
@@ -12,6 +14,8 @@ from xz_transformers.modeling_tf_bert import TFBertForSequenceClassification
 from xz_transformers.data_processors import SequencePairClassificationProcessor, convert_examples_to_features
 from xz_transformers.modeling_tf_utils import calculate_steps
 from xz_transformers.tokenizer import Tokenizer
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 
 class SequencePairClassification:
@@ -29,11 +33,14 @@ class SequencePairClassification:
         # self.tokenizer = BertTokenizer.from_pretrained(pretrained_model_name)
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_model_name, do_lower_case=False,
                                                        do_basic_tokenize=True)
+        if os.path.isfile(pretrained_model_name):
+            self.tokenizer_ = Tokenizer(load_vocab(pretrained_model_name))
 
-        self.tokenizer_ = Tokenizer(load_vocab(PRETRAINED_VOCAB_FILES_MAP['vocab_file'][pretrained_model_name]))
-
-        # training parameters
-        self.pretrained_model_name = pretrained_model_name
+            self.pretrained_model_name = pretrained_model_name.split('/')[-2]
+        else:
+            self.tokenizer_ = Tokenizer(load_vocab(PRETRAINED_VOCAB_FILES_MAP['vocab_file'][pretrained_model_name]))
+            # training parameters
+            self.pretrained_model_name = pretrained_model_name
         self.num_labels = num_labels
         self.max_length = max_length
 
@@ -68,7 +75,7 @@ class SequencePairClassification:
                                                      task=self.task, return_tensors='tf')
 
         # preprocess tf_dataset
-        train_dataset = train_dataset.batch(batch_size)
+        train_dataset = train_dataset.shuffle(10000).batch(batch_size)
         valid_dataset = valid_dataset.batch(batch_size)
 
         return (train_dataset, train_steps), (valid_dataset, valid_steps)
@@ -114,7 +121,7 @@ class SequencePairClassification:
         model = TFBertForSequenceClassification.from_pretrained(self.pretrained_model_name, config=config)
         (train_dataset, train_steps), (valid_dataset, valid_steps) = self.generate_tf_dataset(data_path, batch_size)
         model = self.get_compiled_model(model)
-        early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=2)
+        early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=5)
         # Train and evaluate using tf.keras.Model.fit()
         training_start_time = time.time()
         history_train = model.fit(train_dataset.repeat(), epochs=epochs, steps_per_epoch=train_steps,
@@ -175,33 +182,56 @@ class SequencePairClassification:
 
 
 if __name__ == '__main__':
-    print(ROOT_PATH)
     raw_data_path = os.path.join(ROOT_PATH, 'data/LCQMC')
-    tmp_saved_model_path = os.path.join(ROOT_PATH, 'saved_models/intent_detection/chinese-rbt3')
+    tmp_saved_model_path = os.path.join(ROOT_PATH, 'saved_models/intent_detection/chinese-rbt3-02')
     tmp_spc_obj = SequencePairClassification('chinese-rbt3',
                                              num_labels=1,
                                              max_length=64,
                                              saved_model_path=tmp_saved_model_path)
     # #### training step ####
-    # tmp_spc_obj.train_op(raw_data_path, epochs=5, batch_size=64)
+    # tmp_spc_obj.train_op(raw_data_path, epochs=15, batch_size=64)
 
     # tmp_trained_model_path = os.path.join(ROOT_PATH, 'tasks/saved_models/spc_1')
 
     # #### evaluate step ####
     # tmp_spc_obj.evaluate_op(raw_data_path)
 
-    #### predict step ####
-    tmp_batch_text_pairs = [('！？解下', '阿斯顿'), ('！？解asdsa下', '阿斯sadfa顿'), ('！？解fasfsdfsdf下', '阿sasdsfsfsdfs斯顿')] * 100
+    # #### predict step ####
+    # # process batch_text_pairs
+    # # data/LCQMC/test.tsv
+    # # data/sequence_pair/custom_df_01.tsv
+    # valuable_data_path = os.path.join(ROOT_PATH, 'data/sequence_pair/custom_df_01.tsv')
+    # valuable_df = pd.read_csv(valuable_data_path, sep='\t')
+    # tmp_batch_text_pairs = []
+    # tmp_label = []
+    # for _, tmp_row in valuable_df.iterrows():
+    #     tmp_batch_text_pairs.append((tmp_row.sentence1, tmp_row.sentence2))
+    #     tmp_label.append(tmp_row.label)
+    # trained_model = tmp_spc_obj.get_trained_model()
+    # tmp_start_time = time.time()
+    # tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
+    # print(f'Total cost time: {time.time() - tmp_start_time}')
+    # tmp_y_true = np.asarray(tmp_label)
+    # tmp_y_pred = (tmp_pred > 0.5).astype(np.int64)
+    # tn, fp, fn, tp = confusion_matrix(tmp_y_pred, tmp_y_true).ravel()
+    # precision = tp / (tp + fp)
+    # recall = tp / (tp + fn)
+    # f1_score = 2 * (precision * recall) / (precision + recall)
+    # accuracy = (tp + tn) / (tn + fp + fn + tp)
+    # print(f"--> precision: {precision}.")
+    # print(f"--> recall: {recall}.")
+    # print(f"--> f1 score: {f1_score}.")
+    # print(f"--> accuracy score: {accuracy}.")
+
+    #### play with model ####
     trained_model = tmp_spc_obj.get_trained_model()
-    print(trained_model.name)
-    tmp_start_time = time.time()
-    tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
-    print(f'Total cost time: {time.time() - tmp_start_time}')
-    print(f'++++++++++++++++++++++++++++++++++++++++++++++++')
-    tmp_start_time = time.time()
-    tmp_batch_text_pairs = [('想了解下您会想看哪款车型想了解下您会想看哪款车型想了解下您会想看', '是想请问下您当时买的是哪款车呢想了解下您会想看哪款车型想了解下您')] * 100
-    tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
-    print(f'Total cost time: {time.time() - tmp_start_time}')
-    # for tmp_pair, tmp_score in zip(tmp_batch_text_pairs, tmp_pred):
-    #     print(f'{tmp_pair[0]} & {tmp_pair[1]} --> {tmp_score}')
-    print(tmp_pred)
+    while True:
+        sentence1 = input('sent1: ')
+        sentence2 = input('sent2: ')
+        tmp_batch_text_pairs = [(sentence1, sentence2)]
+        tmp_start_time = time.time()
+        tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
+        print(f'cost time {time.time() - tmp_start_time}')
+        print(f'pred: {tmp_pred[0]}')
+        tmp_y_pred = (tmp_pred > 0.2).astype(np.int64)
+        print(f'y_pred: {tmp_y_pred[0]}\n++++++++++++++++++++++++++++++++')

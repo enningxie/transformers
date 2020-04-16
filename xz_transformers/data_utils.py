@@ -41,6 +41,23 @@ class InputExample(object):
         return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
 
 
+class InputExampleLabeling(object):
+    """A single training/test example for token classification."""
+
+    def __init__(self, guid, words, labels):
+        """Constructs a InputExample.
+
+        Args:
+            guid: Unique id for the example.
+            words: list. The words of the sequence.
+            labels: (Optional) list. The labels for each word of the sequence. This should be
+            specified for train and dev examples, but not for test examples.
+        """
+        self.guid = guid
+        self.words = words
+        self.labels = labels
+
+
 class InputFeatures(object):
     """
     A single set of features of data.
@@ -118,3 +135,9 @@ class DataProcessor(object):
         """Reads a comma separated value file."""
         with open(input_file, "r", encoding="utf-8") as f:
             return list(csv.reader(f, delimiter=",", quotechar=quotechar))
+
+    @classmethod
+    def _read_txt(cls, input_file):
+        """Reads a text value file."""
+        with open(input_file, "r", encoding="utf-8") as f:
+            return f.readlines()

@@ -146,7 +146,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Required parameters
     parser.add_argument(
-        "--tf_dump_path", default="/Data/xen/Codes/transformers_xz/pretrained_models/tensorflow2.x/roberta_chinese_pair_tiny",
+        "--tf_dump_path", default="/Data/xen/Codes/xz_transformers/data/ner",
         type=str, help="Path to the output Tensorflow dump file."
     )
     parser.add_argument(
@@ -159,14 +159,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--pytorch_checkpoint_path",
-        default='roberta_chinese_pair_tiny',
+        default='/Data/xen/Codes/xz_transformers/data/ner/bert-base-multilingual-cased-pytorch_model.bin',
         type=str,
         help="Path to the PyTorch checkpoint path or shortcut name to download from AWS. "
              "If not given, will download and convert all the checkpoints from AWS.",
     )
     parser.add_argument(
         "--config_file",
-        default="roberta_chinese_pair_tiny",
+        default="/Data/xen/Codes/xz_transformers/data/ner/config.json",
         type=str,
         help="The config json file corresponding to the pre-trained model. \n"
              "This specifies the model architecture. If not given and "
