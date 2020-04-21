@@ -175,7 +175,7 @@ def convert_examples_to_features_labeling(
         pad_on_left=False,
         pad_token=0,
         pad_token_segment_id=0,
-        pad_token_label_id=-1,
+        pad_token_label_id=30,  # 30 o
         sequence_a_segment_id=0,
         mask_padding_with_zero=True,
         return_tensors=None,
@@ -439,7 +439,7 @@ class SequenceLabelingProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(self._read_txt(os.path.join(data_dir, "text.txt")), "test")
+        return self._create_examples(self._read_txt(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self, data_dir=None):
         """See base class."""
