@@ -2,23 +2,48 @@
 # Created by xieenning at 2020/4/16
 """Sequence labeling"""
 import os
+import sys
+
+models_path = os.path.join(os.getcwd(), '../../')
+sys.path.append(models_path)
 import time
 import tensorflow as tf
-import tensorflow_addons as tfa
+# import tensorflow_addons as tfa
 import pandas as pd
 import logging
+import pickle
 import numpy as np
-from sklearn.metrics import confusion_matrix
+from itertools import chain
+from tqdm import tqdm
+from sklearn.metrics import classification_report
 from xz_transformers.file_utils import ROOT_PATH, CONFIG_NAME, ID2LABEL_NAME
 from xz_transformers.configuration_bert import BertConfig
 from xz_transformers.tokenization_bert import load_vocab, PRETRAINED_VOCAB_FILES_MAP, BertTokenizer
-from xz_transformers.modeling_tf_bert import TFBertForTokenClassification, TFBertForTokenClassificationWithCRF
+from xz_transformers.modeling_tf_bert import TFBertForTokenClassification
+    # , TFBertForTokenClassificationWithCRF
 from xz_transformers.data_processors import SequenceLabelingProcessor, convert_examples_to_features_labeling
 from xz_transformers.modeling_tf_utils import calculate_steps, load_serialized_data
 from xz_transformers.tokenizer import Tokenizer
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 logging.basicConfig(level=logging.ERROR, format='%(message)s')
+
+
+def preprocess_ner(single_sentence):
+    tmp_chars = []
+    for tmp_char in single_sentence:
+        if tmp_char.isdigit():
+            tmp_chars.append(tmp_char)
+            tmp_chars.append(' ')
+        elif tmp_char.encode('utf-8').isalpha():
+            tmp_chars.append(tmp_char)
+            tmp_chars.append(' ')
+        elif tmp_char in ['━', '○', '─']:
+            tmp_chars.append(tmp_char)
+            tmp_chars.append(' ')
+        else:
+            tmp_chars.append(tmp_char)
+    return ''.join(tmp_chars)
 
 
 class SequenceLabeling(object):
@@ -61,7 +86,7 @@ class SequenceLabeling(object):
         :return:
         """
         # process raw data
-        train_examples = self.data_processor.get_train_examples(data_path)[:1000]
+        train_examples = self.data_processor.get_train_examples(data_path)
         valid_examples = self.data_processor.get_dev_examples(data_path)
 
         # calculate steps
@@ -156,7 +181,7 @@ class SequenceLabeling(object):
                         active_logits = tf.boolean_mask(logits, masks)
                         active_labels = tf.boolean_mask(y_batch_train, masks)
                     # Update training metric.
-                    train_metric(active_labels, active_logits)
+                    train_metric.update_state(active_labels, active_logits)
                     tmp_accuracy = train_metric.result()
                 grads = tape.gradient(loss, model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, model.trainable_weights))
@@ -181,7 +206,7 @@ class SequenceLabeling(object):
                 active_logits_val = tf.boolean_mask(val_logits, masks)
                 active_labels_val = tf.boolean_mask(y_batch_val, masks)
                 # Update val metrics
-                val_metric(active_labels_val, active_logits_val)
+                val_metric.update_state(active_labels_val, active_logits_val)
                 tmp_accuracy = val_metric.result()
                 # Logging
                 validating_bar.update(val_step + 1, values=[('val_acc', float(tmp_accuracy))])
@@ -260,37 +285,138 @@ class SequenceLabeling(object):
         :param batch_text_pairs: [['想了解下您会想看哪款车型', '是想请问下您当时买的是哪款车呢'], ['今天天气很差', '今天天气很棒']]
         :return:
         """
-        inputs = self.tokenizer.batch_encode_plus(batch_text, max_length=self.max_length, return_tensors="tf",
-                                                  pad_to_max_length=True)
+        batch_text_ = []
+        for sentence1 in batch_text:
+            # 去除其中的空格
+            tmp_tokenized_ids = self.tokenizer_.tokenize_once(sentence1)
+            batch_text_.append([tmp_tokenized_id for tmp_tokenized_id in tmp_tokenized_ids if tmp_tokenized_id != 1])
+        inputs = self.tokenizer.batch_encode_plus(batch_text_, max_length=self.max_length,
+                                                  return_tensors='tf', pad_to_max_length=True)
         tmp_id2label_path = os.path.join(self.saved_model_path, ID2LABEL_NAME)
         id2label = load_serialized_data(tmp_id2label_path)
         if self.loss_type == 'crf':
             logits, logits_ = trained_model(inputs, training=False)
-            tmp_pred_label = list(logits.numpy())
-            print('d')
+            tmp_pred_label_tf = logits
         else:
             logits = trained_model(inputs, training=False)[0]
             tmp_pred = tf.nn.softmax(logits, axis=-1)
-            tmp_pred_label = list(tf.argmax(tmp_pred, axis=-1).numpy())
-            print('d')
-        tmp_pred_label_ = list(map(list, tmp_pred_label))
+            tmp_pred_label_tf = tf.argmax(tmp_pred, axis=-1)
+        sequence_lengths = tf.math.reduce_sum(
+            tf.cast(tf.math.not_equal(inputs['input_ids'], 0), dtype=tf.int32), axis=-1)
+        masks = tf.sequence_mask(sequence_lengths, maxlen=tf.shape(logits)[1], dtype=tf.bool)
+        tmp_pred_label_np = tf.boolean_mask(tmp_pred_label_tf, masks).numpy()
+        # print(np.cumsum(sequence_lengths.numpy())[:-1])
+        tmp_pred_label = np.split(tmp_pred_label_np, np.cumsum(sequence_lengths.numpy())[:-1])
+        tmp_pred_label_ = list(map(lambda x: list(x)[1:-1], tmp_pred_label))
         return [list(map(id2label.get, pred_label)) for pred_label in tmp_pred_label_]
 
 
 if __name__ == '__main__':
-    # raw_data_path = os.path.join(ROOT_PATH, 'data/ner')
+    # # raw_data_path = os.path.join(ROOT_PATH, 'data/ner')
     raw_data_path = '/Data/public/DataSets/ner'
-    tmp_saved_model_path = os.path.join(ROOT_PATH, 'saved_models/ner/chinese-rbt3-03')
-    tmp_sl_obj = SequenceLabeling('chinese-rbt3', os.path.join(raw_data_path, 'labels.txt'), 128,
-                                  saved_model_path=tmp_saved_model_path, loss_type='crf')
+    tmp_saved_model_path = os.path.join('/Data/xen/Codes/xz_transformers', 'saved_models/ner/chinese-rbtl3-01')
+    tmp_sl_obj = SequenceLabeling('chinese-rbtl3', os.path.join(raw_data_path, 'labels.txt'), 128,
+                                  saved_model_path=tmp_saved_model_path, loss_type='crossentropy')
     # #### training step ####
-    # tmp_sl_obj.train_op(raw_data_path, epochs=2, batch_size=16)
+    # tmp_sl_obj.train_op(raw_data_path, epochs=2, batch_size=8)
 
     # #### evaluating step ####
     # tmp_sl_obj.evaluate_op(raw_data_path, batch_size=16)
 
     # #### predicting step ####
     # trained_model = tmp_sl_obj.get_trained_model()
-    # batch_text = ['这次投票结果，预计在星期一公布。']
+    # batch_text = ['房子买下来放了几个月,07年的春分我们动手装修,那真的是一段充满了辛苦和幸福的时光,每次我们都开着电动车从294-787公里远的乡下赶到城里,买好东西,又风尘仆仆地赶回去,经历过烈日,也经历'
+    #     , '常州市沿运河两岸648到967公里范围内,大型厂矿企业有一百八十六家。']
     # tmp_result = tmp_sl_obj.predict_op(trained_model, batch_text)
     # print(tmp_result)
+    # print(list(chain(*tmp_result)))
+
+    # #### process dev data for classification report ####
+    # test_data_path = os.path.join(raw_data_path, 'test.txt')
+    # tmp_batch_text = []
+    # tmp_test_data_label = []
+    # with open(test_data_path, 'r', encoding='utf-8') as f:
+    #     tmp_lines = f.readlines()
+    # tmp_chars = []
+    # tmp_labels = []
+    # tmp_count = None
+    # for tmp_line in tmp_lines:
+    #     if tmp_line == '\n':
+    #         tmp_batch_text.append(''.join(tmp_chars))
+    #         tmp_test_data_label.append(tmp_labels)
+    #         tmp_chars = []
+    #         tmp_labels = []
+    #         if tmp_count is not None:
+    #             tmp_count += 1
+    #         if tmp_count == 50:
+    #             break
+    #         continue
+    #     tmp_splits = tmp_line.split(' ')
+    #     if tmp_splits[0].isdigit():
+    #         tmp_chars.append(tmp_splits[0])
+    #         tmp_chars.append(' ')
+    #     elif tmp_splits[0].encode('utf-8').isalpha():
+    #         tmp_chars.append(tmp_splits[0])
+    #         tmp_chars.append(' ')
+    #     elif tmp_splits[0] in ['━', '○', '─']:
+    #         tmp_chars.append(tmp_splits[0])
+    #         tmp_chars.append(' ')
+    #     else:
+    #         tmp_chars.append(tmp_splits[0])
+    #     tmp_labels.append(tmp_splits[1].replace("\n", ""))
+    # tmp_id2label_path = os.path.join(tmp_saved_model_path, ID2LABEL_NAME)
+    # id2label = load_serialized_data(tmp_id2label_path)
+    #
+    # trained_model = tmp_sl_obj.get_trained_model()
+    # tmp_batch_size = 32
+    # if len(tmp_batch_text) % tmp_batch_size == 0:
+    #     tmp_steps = len(tmp_batch_text) // tmp_batch_size
+    # else:
+    #     tmp_steps = len(tmp_batch_text) // tmp_batch_size + 1
+    # total_result = []
+    # for tmp_step in tqdm(range(tmp_steps)):
+    #     start_index = tmp_step * tmp_batch_size
+    #     if tmp_step == tmp_steps - 1:
+    #         end_index = None
+    #     else:
+    #         end_index = tmp_step * tmp_batch_size + tmp_batch_size
+    #     tmp_ground_truth = tmp_test_data_label[start_index:end_index]
+    #     tmp_result = tmp_sl_obj.predict_op(trained_model, tmp_batch_text[start_index:end_index])
+    #     for tmp_index, (tmp_r, tmp_gt) in enumerate(zip(tmp_result, tmp_ground_truth)):
+    #         if len(tmp_r) != len(tmp_gt):
+    #             print(tmp_batch_text[start_index:end_index][tmp_index])
+    #     total_result.extend(tmp_result)
+    # # 保存数据
+    # with open('chinese-rbt3-01.pickle', 'wb') as f:
+    #     pickle.dump(total_result, f, -1)
+    # # # 恢复数据
+    # # with open('chinese-roberta-wwm-ext-01-result.pickle', 'rb') as file:
+    # #     total_result = pickle.load(file)
+    # tmp_test_data_label_flattened = list(chain(*tmp_test_data_label))
+    # total_result_flattened = list(chain(*total_result))
+    # y_set = set(tmp_test_data_label_flattened)
+    # pred_set = set(total_result_flattened)
+    # unique_classes = list(y_set | pred_set)
+    # print(f'unique_classes len: {len(unique_classes)}')
+    # label2id = {tmp_value: tmp_key for tmp_key, tmp_value in id2label.items()}
+    # unique_classes_num = sorted(list(map(label2id.get, unique_classes)))
+    # class_names = [id2label[tmp_index] for tmp_index in unique_classes_num]
+    # print(f'class_names len: {len(class_names)}')
+    # print(classification_report(tmp_test_data_label_flattened, total_result_flattened, target_names=class_names))
+
+    #### predict performance counter step ####
+    trained_model = tmp_sl_obj.get_trained_model()
+    origin_batch_text = ['宝马x5挺好的', '宝马x5挺好的啊']
+    print(len(origin_batch_text[0]))
+    batch_text = list(map(preprocess_ner, origin_batch_text))
+    print(len(batch_text[0]))
+    tmp_result = tmp_sl_obj.predict_op(trained_model, batch_text)
+    print(tmp_result)
+    print(list(chain(*tmp_result)))
+    print(list(zip(origin_batch_text[0], list(chain(*tmp_result)))))
+    total_time = 0.
+    for i in range(10):
+        tmp_start_time = time.perf_counter()
+        tmp_result = tmp_sl_obj.predict_op(trained_model, batch_text)
+        total_time += time.perf_counter() - tmp_start_time
+    print(f'Cost time: {total_time / 10}')

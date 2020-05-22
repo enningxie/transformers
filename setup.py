@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="xz-transformers",
-    version="0.1.3",
+    version="0.1.6",
     author="enningxie",
     author_email="enningxie@163.com",
     description="Refactored from huggingface/transformers",

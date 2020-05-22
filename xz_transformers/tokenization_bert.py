@@ -393,6 +393,7 @@ class BasicTokenizer(object):
             #     # todo: 去除对accent的操作 3/30
             #     token = self._run_strip_accents(token)
             split_tokens.extend(self._run_split_on_punc(token, never_split))
+            # todo：对数字进行切分
 
         output_tokens = whitespace_tokenize(" ".join(split_tokens))
         return output_tokens
@@ -408,7 +409,6 @@ class BasicTokenizer(object):
                 continue
             output.append(char)
         return "".join(output)
-
 
     def _run_split_on_punc(self, text, never_split=None):
         """Splits punctuation on a piece of text."""
@@ -429,6 +429,7 @@ class BasicTokenizer(object):
                 start_new_word = False
                 output[-1].append(char)
             i += 1
+
 
         return ["".join(x) for x in output]
 

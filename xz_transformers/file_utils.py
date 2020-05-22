@@ -42,8 +42,8 @@ TF2_WEIGHTS_NAME = "tf_model.h5"
 WEIGHTS_NAME = "pytorch_model.bin"
 TF_WEIGHTS_NAME = "model.ckpt"
 ID2LABEL_NAME = 'id2label.pkl'
-ROOT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
-
+# ROOT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
+ROOT_PATH = '/Data/public'
 
 def is_torch_available():
     return _torch_available

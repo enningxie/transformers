@@ -2,14 +2,14 @@
 # Created by xieenning at 2020/3/23
 import os
 import sys
-models_path = os.path.join(os.getcwd(), '../')
+models_path = os.path.join(os.getcwd(), '../../')
 sys.path.append(models_path)
 from xz_transformers.tasks.about_sequence_pair_classification import SequencePairClassification
 from xz_transformers.tasks.about_single_sequence_classification import SingleSequenceClassification
 import logging
 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -61,9 +61,9 @@ if __name__ == '__main__':
                            "chinese-roberta-wwm-ext", "chinese-roberta-wwm-ext-large"]
     tmp_num_labels = 1
     tmp_max_length = 64
-    tmp_data_path = '/Data/xen/Codes/transformers_xz/data/LCQMC'
+    tmp_data_path = '/Data/enningxie/Codes/transformers_xz/data/LCQMC'
     tmp_task_name = 'spc'
-    tmp_saved_path = '/Data/xen/Codes/transformers_xz/saved_models/intent_detection'
+    tmp_saved_path = '/Data/enningxie/Codes/transformers_xz/saved_models/intent_detection_0515'
     training_pipeline = TrainingPipeline(tmp_ptm_short_names, tmp_num_labels, tmp_max_length, tmp_data_path,
                                          tmp_task_name)
     training_pipeline.run(tmp_saved_path)

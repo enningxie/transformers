@@ -15,7 +15,7 @@ from xz_transformers.data_processors import SequencePairClassificationProcessor,
 from xz_transformers.modeling_tf_utils import calculate_steps
 from xz_transformers.tokenizer import Tokenizer
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 class SequencePairClassification:
@@ -183,7 +183,7 @@ class SequencePairClassification:
 
 if __name__ == '__main__':
     raw_data_path = os.path.join(ROOT_PATH, 'data/LCQMC')
-    tmp_saved_model_path = os.path.join(ROOT_PATH, 'saved_models/intent_detection/chinese-rbt3-02')
+    tmp_saved_model_path = '/Data/enningxie/Codes/transformers_xz/saved_models/intent_detection_0515/chinese-rbt3'
     tmp_spc_obj = SequencePairClassification('chinese-rbt3',
                                              num_labels=1,
                                              max_length=64,
@@ -196,42 +196,58 @@ if __name__ == '__main__':
     # #### evaluate step ####
     # tmp_spc_obj.evaluate_op(raw_data_path)
 
-    # #### predict step ####
-    # # process batch_text_pairs
-    # # data/LCQMC/test.tsv
-    # # data/sequence_pair/custom_df_01.tsv
-    # valuable_data_path = os.path.join(ROOT_PATH, 'data/sequence_pair/custom_df_01.tsv')
-    # valuable_df = pd.read_csv(valuable_data_path, sep='\t')
-    # tmp_batch_text_pairs = []
-    # tmp_label = []
-    # for _, tmp_row in valuable_df.iterrows():
-    #     tmp_batch_text_pairs.append((tmp_row.sentence1, tmp_row.sentence2))
-    #     tmp_label.append(tmp_row.label)
-    # trained_model = tmp_spc_obj.get_trained_model()
-    # tmp_start_time = time.time()
-    # tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
-    # print(f'Total cost time: {time.time() - tmp_start_time}')
-    # tmp_y_true = np.asarray(tmp_label)
-    # tmp_y_pred = (tmp_pred > 0.5).astype(np.int64)
-    # tn, fp, fn, tp = confusion_matrix(tmp_y_pred, tmp_y_true).ravel()
-    # precision = tp / (tp + fp)
-    # recall = tp / (tp + fn)
-    # f1_score = 2 * (precision * recall) / (precision + recall)
-    # accuracy = (tp + tn) / (tn + fp + fn + tp)
-    # print(f"--> precision: {precision}.")
-    # print(f"--> recall: {recall}.")
-    # print(f"--> f1 score: {f1_score}.")
-    # print(f"--> accuracy score: {accuracy}.")
-
-    #### play with model ####
+    #### predict step ####
+    # process batch_text_pairs
+    # data/LCQMC/test.tsv
+    # data/sequence_pair/custom_df_01.tsv
+    valuable_data_path = '/Data/xen/Codes/notebooks/Intent_detection/data/test_df.tsv'
+    valuable_data_path_ = '/Data/xen/Codes/xz_transformers/data/LCQMC/test.tsv'
+    valuable_df = pd.read_csv(valuable_data_path, sep='\t')
+    tmp_batch_text_pairs = []
+    tmp_label = []
+    for _, tmp_row in valuable_df.iterrows():
+        tmp_batch_text_pairs.append((tmp_row.sentence1, tmp_row.sentence2))
+        tmp_label.append(tmp_row.label)
     trained_model = tmp_spc_obj.get_trained_model()
-    while True:
-        sentence1 = input('sent1: ')
-        sentence2 = input('sent2: ')
-        tmp_batch_text_pairs = [(sentence1, sentence2)]
-        tmp_start_time = time.time()
-        tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
-        print(f'cost time {time.time() - tmp_start_time}')
-        print(f'pred: {tmp_pred[0]}')
-        tmp_y_pred = (tmp_pred > 0.2).astype(np.int64)
-        print(f'y_pred: {tmp_y_pred[0]}\n++++++++++++++++++++++++++++++++')
+    tmp_start_time = time.perf_counter()
+    tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
+    print(f'Total cost time: {time.perf_counter() - tmp_start_time}')
+    tmp_threshold = 0.01
+    best_threshold = tmp_threshold
+    best_precision = 0.0
+    best_recall = 0.0
+    best_f1_score = 0.0
+    best_accuracy = 0.0
+    while tmp_threshold < 1.0:
+        tmp_y_true = np.asarray(tmp_label)
+        tmp_y_pred = (tmp_pred > tmp_threshold).astype(np.int64)
+        tn, fp, fn, tp = confusion_matrix(tmp_y_true, tmp_y_pred).ravel()
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        f1_score = 2 * (precision * recall) / (precision + recall)
+        accuracy = (tp + tn) / (tn + fp + fn + tp)
+        if f1_score > best_f1_score:
+            best_threshold = tmp_threshold
+            best_precision = precision
+            best_recall = recall
+            best_f1_score = f1_score
+            best_accuracy = accuracy
+        tmp_threshold += 0.01
+    print(f"--> threshold: {best_threshold}.")
+    print(f"--> precision: {best_precision}.")
+    print(f"--> recall: {best_recall}.")
+    print(f"--> f1 score: {best_f1_score}.")
+    print(f"--> accuracy score: {best_accuracy}.")
+
+    # #### play with model ####
+    # trained_model = tmp_spc_obj.get_trained_model()
+    # while True:
+    #     sentence1 = input('sent1: ')
+    #     sentence2 = input('sent2: ')
+    #     tmp_batch_text_pairs = [(sentence1, sentence2)]
+    #     tmp_start_time = time.time()
+    #     tmp_pred = tmp_spc_obj.predict_op(trained_model, tmp_batch_text_pairs)
+    #     print(f'cost time {time.time() - tmp_start_time}')
+    #     print(f'pred: {tmp_pred[0]}')
+    #     tmp_y_pred = (tmp_pred > 0.2).astype(np.int64)
+    #     print(f'y_pred: {tmp_y_pred[0]}\n++++++++++++++++++++++++++++++++')

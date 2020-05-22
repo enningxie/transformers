@@ -22,7 +22,7 @@ import h5py
 import pickle
 import numpy as np
 import tensorflow as tf
-import tensorflow_addons as tfa
+# import tensorflow_addons as tfa
 from tensorflow.python.keras.saving import hdf5_format
 from .file_utils import DUMMY_INPUTS, TF2_WEIGHTS_NAME, WEIGHTS_NAME
 from .configuration_utils import PretrainedConfig
@@ -438,24 +438,24 @@ class TFConv1D(tf.keras.layers.Layer):
         return x
 
 
-class CRFLayer(tf.keras.layers.Layer):
-    def __init__(self, num_tags):
-        super(CRFLayer, self).__init__()
-
-        self.num_tags = num_tags
-
-    def build(self, input_shape):
-        self.trans_params = self.add_weight(
-            name='trans_params',
-            shape=(self.num_tags, self.num_tags))
-        self.build = True
-
-    def call(self, x, seq_len):
-        # x.shape == (batch_size, max_seq_len, num_tags)
-
-        tags, scores = tfa.text.crf_decode(x, self.trans_params, seq_len)
-
-        return tags, scores
+# class CRFLayer(tf.keras.layers.Layer):
+#     def __init__(self, num_tags):
+#         super(CRFLayer, self).__init__()
+#
+#         self.num_tags = num_tags
+#
+#     def build(self, input_shape):
+#         self.trans_params = self.add_weight(
+#             name='trans_params',
+#             shape=(self.num_tags, self.num_tags))
+#         self.build = True
+#
+#     def call(self, x, seq_len):
+#         # x.shape == (batch_size, max_seq_len, num_tags)
+#
+#         tags, scores = tfa.text.crf_decode(x, self.trans_params, seq_len)
+#
+#         return tags, scores
 
 
 class TFSharedEmbeddings(tf.keras.layers.Layer):
