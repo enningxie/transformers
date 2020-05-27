@@ -25,3 +25,7 @@ xz_transformers_enningxie.egg-info
 convert_albert*
 
 experiment_record.md
+
+assets
+
+xz_transformers/tasks/*_copy.py

@@ -15,7 +15,7 @@ from rich import box
 from rich.table import Table
 from collections import defaultdict
 from sklearn.metrics import confusion_matrix
-from xz_transformers.tasks.about_sequence_pair_classification import SequencePairClassification
+from xz_transformers.tasks.about_sequence_pair_classification_copy import SequencePairClassification
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -77,12 +77,12 @@ def construct_table(dataset_name, data_dict):
 
 
 if __name__ == '__main__':
-    tmp_ptm_short_names = ["chinese-rbt3", "chinese-rbtl3", "roberta_chinese_3L312_clue_tiny",
-                           "roberta_chinese_3L768_clue_tiny", "roberta_chinese_clue_tiny", "roberta_chinese_pair_tiny",
-                           "chinese_simbert_zhuiyi", "chinese-bert-wwm", "chinese-bert-wwm-ext",
-                           "chinese-roberta-wwm-ext"]
-    # tmp_ptm_short_names = ["chinese-rbt3", "chinese-rbtl3"]
-    models_folder = 'intent_detection_0515'
+    # tmp_ptm_short_names = ["chinese-rbt3", "chinese-rbtl3", "roberta_chinese_3L312_clue_tiny",
+    #                        "roberta_chinese_3L768_clue_tiny", "roberta_chinese_clue_tiny", "roberta_chinese_pair_tiny",
+    #                        "chinese_simbert_zhuiyi", "chinese-bert-wwm", "chinese-bert-wwm-ext",
+    #                        "chinese-roberta-wwm-ext"]
+    tmp_ptm_short_names = ["chinese-rbt3", "chinese-rbtl3"]
+    models_folder = 'intent_detection_2_10_0_onnx'
     valuable_data_paths = {'Std': '/Data/enningxie/Codes/transformers_xz/data/LCQMC/test.tsv',
                            'Custom_01': '/Data/enningxie/Codes/Notebooks/data/test_df.tsv',
                            'Custom_02': '/Data/enningxie/Codes/Notebooks/data/test_df_0509.tsv',
